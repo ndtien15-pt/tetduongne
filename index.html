@@ -2,37 +2,38 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Happy New Year 2026 - Brilliant Colors</title>
+    <title>Happy New Year 2026 - Fireworks</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <style>
-        body { margin: 0; overflow: hidden; background: #000; }
-        .canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        body { margin: 0; overflow: hidden; background: #000; touch-action: none; }
         canvas { display: block; position: absolute; top: 0; left: 0; }
         
-        /* Màn hình chờ */
-        #loading-screen {
+        /* Màn hình chờ bấm nút */
+        #start-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.85); z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column; transition: opacity 0.5s;
         }
         #btn-play {
-            padding: 20px 60px; font-size: 24px; color: #ffd700; 
-            border: 2px solid #ffd700; background: transparent; 
-            cursor: pointer; font-weight: bold; text-transform: uppercase;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            padding: 20px 50px; font-size: 24px; color: #fff;
+            background: linear-gradient(90deg, #FFD700, #FF4500); /* Cam vàng rực rỡ */
+            border: 2px solid #fff; border-radius: 50px; cursor: pointer;
+            font-weight: bold; text-transform: uppercase; letter-spacing: 2px;
+            box-shadow: 0 0 30px rgba(255, 69, 0, 0.6);
             animation: pulse 1.5s infinite;
-            font-family: Arial, sans-serif;
         }
         @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
-            50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); }
-            100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(255, 69, 0, 0.9); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
 
-<div id="loading-screen">
-    <button id="btn-play">BẤM ĐỂ CHÚC MỪNG 2026</button>
+<div id="start-overlay">
+    <button id="btn-play">BẮT ĐẦU 2026 🎆</button>
 </div>
 
 <div class="canvas-container">
@@ -46,13 +47,15 @@
 <script src="script.js"></script>
 
 <script>
+    // Xử lý sự kiện bấm nút để bắt đầu
     document.getElementById('btn-play').addEventListener('click', function() {
-        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('start-overlay').style.opacity = 0;
+        setTimeout(() => { 
+            document.getElementById('start-overlay').style.display = 'none'; 
+        }, 500);
         
-        // Kích hoạt lại âm thanh (nếu bị trình duyệt chặn)
-        if(soundManager && soundManager.resumeAll) soundManager.resumeAll();
-
-        // Bắt đầu kịch bản đếm ngược
+        // Kích hoạt âm thanh và kịch bản
+        if(window.soundManager) window.soundManager.resume();
         if(window.startMyCountdown) window.startMyCountdown();
     });
 </script>
