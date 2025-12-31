@@ -1,54 +1,259 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Happy New Year 2026</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <style>
-        body { margin: 0; overflow: hidden; background: #000; touch-action: none; }
-        canvas { display: block; position: absolute; top: 0; left: 0; }
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Trình mô phỏng pháo hoa - Happy New Year 2026</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#000000" />
+        <link rel="shortcut icon" type="image/png" href="./images/favicon.png" />
+        <link rel="icon" type="image/png" href="./images/favicon.png" />
+        <link rel="apple-touch-icon-precomposed" href="./images/favicon.png" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/clippy.js/1.0.0/clippy.min.css" />
         
-        /* Nút Bấm */
-        #start-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
-        }
-        #btn-play {
-            padding: 20px 50px; font-size: 24px; color: #ffd700;
-            border: 2px solid #ffd700; background: transparent; cursor: pointer;
-            font-weight: bold; text-transform: uppercase; letter-spacing: 2px;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            font-family: Arial, sans-serif;
-        }
-        #btn-play:hover { background: #ffd700; color: #000; }
-    </style>
-</head>
-<body>
+        <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@900&display=swap" rel="stylesheet">
 
-<div id="start-overlay">
-    <button id="btn-play">BẮT ĐẦU 2026</button>
-</div>
+        <style>
+            /* --- PHẦN CODE CŨ CỦA BẠN (GIỮ NGUYÊN) --- */
+            .shape-gallery { display: flex; gap: 24px; justify-content: center; align-items: center; padding: 16px; }
+            .shape-card { width: 240px; height: 240px; position: relative; }
+            .shape-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+            .shape-circle img { border-radius: 50%; }
+            .shape-heart img { clip-path: path("M 120 224 C 8 144 0 72 60 40 C 96 24 120 40 120 56 C 120 40 144 24 180 40 C 240 72 232 144 120 224 Z"); -webkit-clip-path: path("M 120 224 C 8 144 0 72 60 40 C 96 24 120 40 120 56 C 120 40 144 24 180 40 C 240 72 232 144 120 224 Z"); }
+            .wishes-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; transform-origin: center center; transform-style: preserve-3d; will-change: transform; }
+            .wishes-layer.dragging { transition: none; }
+            .wish-wrapper { position: absolute; bottom: -3rem; left: 50%; transform: translateX(-50%) translateY(0); opacity: 0; pointer-events: none; }
+            .wish-text { display: inline-block; font-size: 1.1rem; padding: 0.4rem 1rem; border-radius: 999px; color: #ff9ad9; text-shadow: 0 0 6px rgba(255, 105, 180, 0.9), 0 0 18px rgba(255, 20, 147, 0.8); background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 192, 203, 0.7); box-shadow: 0 0 14px rgba(255, 105, 180, 0.7), 0 0 32px rgba(255, 20, 147, 0.4); white-space: nowrap; transform-origin: center center; pointer-events: auto; }
+            @media (max-width: 768px) { .wish-text { font-size: 0.9rem; padding: 0.35rem 1rem; max-width: 92vw; min-width: 200px; white-space: normal; word-wrap: break-word; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } }
+            @media (max-width: 480px) { .wish-text { font-size: 0.8rem; padding: 0.3rem 0.85rem; max-width: 94vw; min-width: 180px; } }
+            @keyframes wishFloatUp { 0% { opacity: 0; transform: translateX(-50%) translateY(10vh); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-110vh); } }
+            .wish-animate { animation: wishFloatUp 7s linear forwards; }
+            .wish-image { display: inline-block; width: 120px; height: 120px; object-fit: cover; border-radius: 12px; border: 3px solid rgba(255, 192, 203, 0.9); box-shadow: 0 0 20px rgba(255, 105, 180, 0.8); animation: imageGlow 2s ease-in-out infinite alternate; }
+            .pause-btn, .settings-btn { display: none !important; }
 
-<div class="canvas-container">
-    <canvas id="trails-canvas"></canvas>
-    <canvas id="main-canvas"></canvas>
-</div>
+            /* --- PHẦN CSS MỚI CHO ĐẾM NGƯỢC & TEXT 2026 --- */
+            #countdown-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 9999; /* Luôn nằm trên cùng */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                pointer-events: none; /* Để click xuyên qua được nếu cần */
+                text-align: center;
+            }
 
-<script src="fscreen.js"></script>
-<script src="Stage.js"></script>
-<script src="MyMath.js"></script>
-<script src="script.js"></script>
+            /* Số đếm ngược */
+            .countdown-number {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 15rem;
+                color: #fff;
+                text-shadow: 0 0 20px #ff00de, 0 0 40px #ff00de;
+                animation: pulseNumber 1s infinite;
+            }
 
-<script>
-    document.getElementById('btn-play').addEventListener('click', function() {
-        document.getElementById('start-overlay').style.display = 'none';
+            /* Chữ Happy New Year */
+            .happy-text {
+                font-family: 'Dancing Script', cursive;
+                font-size: 5rem;
+                color: #ffd700; /* Màu vàng kim */
+                text-shadow: 0 0 10px #ffaa00, 0 0 20px #ffaa00, 0 0 40px #ff0000;
+                opacity: 0;
+                transform: scale(0.5);
+                transition: all 1s ease-out;
+            }
+
+            .happy-text.show {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            /* Chữ 2026 Nghệ thuật */
+            .year-art {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 8rem;
+                background: linear-gradient(to bottom, #fff, #ffd700, #ff8c00);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                text-shadow: 0px 0px 30px rgba(255, 215, 0, 0.8);
+                opacity: 0;
+                margin-top: 20px;
+                letter-spacing: 10px;
+                transform: translateY(50px);
+                transition: all 1.5s ease-out;
+                position: relative;
+            }
+
+            /* Hiệu ứng lấp lánh cho 2026 */
+            .year-art::after {
+                content: '2026';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(45deg, transparent 45%, #fff 50%, transparent 55%);
+                background-size: 200% 200%;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                animation: shine 3s infinite;
+            }
+
+            .year-art.show {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            @keyframes pulseNumber {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.2); opacity: 0.8; }
+                100% { transform: scale(0); opacity: 0; }
+            }
+
+            @keyframes shine {
+                0% { background-position: -100%; }
+                100% { background-position: 200%; }
+            }
+
+            @media (max-width: 768px) {
+                .countdown-number { font-size: 8rem; }
+                .happy-text { font-size: 3rem; }
+                .year-art { font-size: 4rem; }
+            }
+        </style>
+
+        <link href="./fonts/css.css" rel="stylesheet" />
+        <link rel="stylesheet" href="./css/style.css" />
+    </head>
+    <body>
         
-        // Kích hoạt âm thanh và chạy kịch bản
-        if(window.soundManager) window.soundManager.resumeAll();
-        if(window.startMyCountdown) window.startMyCountdown();
-    });
-</script>
+        <div id="countdown-overlay">
+            <div id="content-area"></div>
+        </div>
 
-</body>
+        <div style="height: 0; width: 0; position: absolute; visibility: hidden">
+            <svg xmlns="http://www.w3.org/2000/svg">
+                <symbol id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></symbol>
+                <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></symbol>
+                <symbol id="icon-close" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" /></symbol>
+                <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" /></symbol>
+                <symbol id="icon-sound-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" /></symbol>
+                <symbol id="icon-sound-off" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" /></symbol>
+                <symbol id="icon-stop-wishes" viewBox="0 0 24 24"><path d="M6 6h12v12H6z" /></symbol>
+            </svg>
+        </div>
+        
+        <div class="container">
+            <div class="stage-container remove">
+                <div class="wishes-layer" id="wishes-layer"></div>
+                <div class="canvas-container">
+                    <canvas id="trails-canvas"> </canvas>
+                    <canvas id="main-canvas"> </canvas>
+                </div>
+                <div class="controls">
+                    <div class="btn pause-btn"><svg fill="white" width="24" height="24"><use href="#icon-pause" xlink:href="#icon-pause"></use></svg></div>
+                    <div class="btn sound-btn"><svg fill="white" width="24" height="24"><use href="#icon-sound-off" xlink:href="#icon-sound-off"></use></svg></div>
+                    <div class="btn stop-wishes-btn"><svg fill="white" width="24" height="24"><use href="#icon-stop-wishes" xlink:href="#icon-stop-wishes"></use></svg></div>
+                    <div class="btn settings-btn"><svg fill="white" width="24" height="24"><use href="#icon-settings" xlink:href="#icon-settings"></use></svg></div>
+                </div>
+                <div class="menu hide">
+                    <div class="menu__inner-wrap">
+                        <div class="btn btn--bright close-menu-btn"><svg fill="white" width="24" height="24"><use href="#icon-close" xlink:href="#icon-close"></use></svg></div>
+                        <div class="menu__header">Cài đặt</div>
+                        <div class="menu__subheader">Để biết thêm thông tin hãy nhấp vào bất kỳ nhãn nào</div>
+                        <form>
+                            <div class="form-option form-option--select"><label class="shell-type-label"> Loại pháo hoa </label><select class="shell-type"></select></div>
+                            <div class="form-option form-option--select"><label class="shell-size-label"> Kích thước pháo hoa </label><select class="shell-size"></select></div>
+                            <div class="form-option form-option--select"><label class="quality-ui-label"> Chất lượng hiển thị </label><select class="quality-ui"></select></div>
+                            <div class="form-option form-option--select"><label class="sky-lighting-label"> Độ sáng bầu trời </label><select class="sky-lighting"></select></div>
+                            <div class="form-option form-option--select"><label class="scaleFactor-label"> Thu phóng </label><select class="scaleFactor"></select></div>
+                            <div class="form-option form-option--checkbox"><label class="word-shell-label"> Pháo hoa chữ </label><input class="word-shell" type="checkbox" /></div>
+                            <div class="form-option form-option--checkbox"><label class="auto-launch-label"> Tự động bắn pháo </label><input class="auto-launch" type="checkbox" /></div>
+                            <div class="form-option form-option--checkbox form-option--finale-mode"><label class="finale-mode-label"> Bắn nhiều pháo hoa cùng lúc </label><input class="finale-mode" type="checkbox" /></div>
+                            <div class="form-option form-option--checkbox"><label class="hide-controls-label"> Ẩn nút điều khiển </label><input class="hide-controls" type="checkbox" /></div>
+                            <div class="form-option form-option--checkbox form-option--fullscreen"><label class="fullscreen-label"> Toàn màn hình </label><input class="fullscreen" type="checkbox" /></div>
+                            <div class="form-option form-option--checkbox"><label class="long-exposure-label"> Giữ vệt sáng pháo hoa </label><input class="long-exposure" type="checkbox" /></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="help-modal">
+                <div class="help-modal__overlay"></div>
+                <div class="help-modal__dialog">
+                    <div class="help-modal__header"></div>
+                    <div class="help-modal__body"></div>
+                    <button type="button" class="help-modal__close-btn">Đóng</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="./js/fscreen.js"></script>
+        <script src="./js/Stage.js"></script>
+        <script src="./js/MyMath.js"></script>
+        <script src="./js/script.js"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const contentArea = document.getElementById('content-area');
+                let count = 5;
+
+                // Hàm hiển thị số đếm ngược
+                function showCount() {
+                    contentArea.innerHTML = `<div class="countdown-number">${count}</div>`;
+                    
+                    if (count > 0) {
+                        count--;
+                        setTimeout(showCount, 1000);
+                    } else {
+                        // Khi đếm xong
+                        triggerNewYear();
+                    }
+                }
+
+                function triggerNewYear() {
+                    // 1. Kích hoạt pháo hoa (mô phỏng click vào checkbox tự động bắn)
+                    const autoLaunchCheckbox = document.querySelector('.auto-launch');
+                    if (autoLaunchCheckbox && !autoLaunchCheckbox.checked) {
+                        autoLaunchCheckbox.click(); 
+                    }
+
+                    // 2. Hiển thị chữ Happy New Year
+                    contentArea.innerHTML = `<div class="happy-text">HAPPY NEW YEAR<br>2026</div>`;
+                    
+                    // Thêm class để kích hoạt animation fade in
+                    setTimeout(() => {
+                        const happyText = document.querySelector('.happy-text');
+                        if(happyText) happyText.classList.add('show');
+                    }, 100);
+
+                    // 3. Sau 3 giây, ẩn chữ Happy New Year và hiện số 2026 nghệ thuật
+                    setTimeout(() => {
+                        const happyText = document.querySelector('.happy-text');
+                        if(happyText) {
+                            happyText.style.opacity = '0'; // Fade out
+                            happyText.style.transform = 'scale(2)'; // Zoom out effect
+                        }
+
+                        setTimeout(() => {
+                            contentArea.innerHTML = `<div class="year-art">2026</div>`;
+                            setTimeout(() => {
+                                const yearArt = document.querySelector('.year-art');
+                                if(yearArt) yearArt.classList.add('show');
+                            }, 100);
+                        }, 1000); // Đợi fade out xong mới hiện số mới
+
+                    }, 4000); // Thời gian hiện chữ Happy New Year
+                }
+
+                // Bắt đầu đếm ngược ngay khi tải trang (hoặc bạn có thể gắn vào nút click nào đó)
+                // Đợi 1 chút để trang load xong hẳn tài nguyên
+                setTimeout(showCount, 1000);
+            });
+        </script>
+    </body>
 </html>
