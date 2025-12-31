@@ -1,28 +1,29 @@
 "use strict";
 
+// --- CẤU HÌNH HỆ THỐNG ---
 const IS_MOBILE = window.innerWidth <= 640;
-const IS_DESKTOP = window.innerWidth > 800;
 const GRAVITY = 0.9;
 let simSpeed = 1;
 let stageW, stageH;
 let quality = 2;
 
-// Bảng màu Neon rực rỡ cho chữ
+// BẢNG MÀU RỰC RỠ (DÙNG ĐỂ VẼ CHỮ LOANG MÀU)
 const COLOR = {
     Red: "#ff0043", Green: "#14fc56", Blue: "#1e7fff", Purple: "#e60aff", 
     Gold: "#ffbf36", White: "#ffffff", Cyan: "#00ffff", Magenta: "#ff00ff", 
-    Lime: "#ccff00", Orange: "#ff9900"
+    Lime: "#ccff00", Orange: "#ff9900", Pink: "#ff00cc"
 };
 const INVISIBLE = "_INVISIBLE_";
 const PI_2 = Math.PI * 2;
 
+// Khởi tạo Canvas
 const trailsStage = new Stage("trails-canvas");
 const mainStage = new Stage("main-canvas");
 const stages = [trailsStage, mainStage];
 
-// --- HỆ THỐNG ÂM THANH (GỐC + FIX ĐƯỜNG DẪN) ---
+// --- QUẢN LÝ ÂM THANH (CHẾ ĐỘ AN TOÀN - KHÔNG TREO MÁY) ---
 const soundManager = {
-    baseURL: "", // Tìm file ngay tại thư mục hiện tại
+    baseURL: "", 
     ctx: new (window.AudioContext || window.webkitAudioContext)(),
     sources: {
         lift: { volume: 1, playbackRateMin: 0.85, playbackRateMax: 0.95, fileNames: ["lift1.mp3", "lift2.mp3", "lift3.mp3"] },
@@ -33,46 +34,44 @@ const soundManager = {
     },
     buffers: {},
     preload() {
-        const allPromises = [];
+        // Tải nhạc nhưng KHÔNG return Promise chặn luồng
         Object.keys(this.sources).forEach(key => {
             const source = this.sources[key];
             source.fileNames.forEach(fileName => {
-                const promise = fetch(this.baseURL + fileName)
+                fetch(fileName)
                     .then(res => {
-                        if (!res.ok) throw new Error("File not found");
-                        return res.arrayBuffer();
+                        if (res.ok) return res.arrayBuffer();
                     })
-                    .then(data => this.ctx.decodeAudioData(data))
-                    .then(buffer => {
-                        if (!this.buffers[key]) this.buffers[key] = [];
-                        this.buffers[key].push(buffer);
+                    .then(data => {
+                        if(data) this.ctx.decodeAudioData(data, buffer => {
+                            if (!this.buffers[key]) this.buffers[key] = [];
+                            this.buffers[key].push(buffer);
+                        });
                     })
-                    .catch(e => console.warn("Lỗi tải nhạc (bỏ qua): " + fileName));
-                allPromises.push(promise);
+                    .catch(e => { /* Kệ lỗi nhạc, hình vẫn phải chạy */ });
             });
         });
-        return Promise.all(allPromises);
     },
     playSound(type, scale = 1) {
+        // Có nhạc thì phát, không có thì thôi
         if (!this.buffers[type] || this.buffers[type].length === 0) return;
-        const sourceCfg = this.sources[type];
-        const buffer = this.buffers[type][Math.floor(Math.random() * this.buffers[type].length)];
-        const gainNode = this.ctx.createGain();
-        gainNode.gain.value = sourceCfg.volume * scale;
-        const src = this.ctx.createBufferSource();
-        src.buffer = buffer;
-        src.playbackRate.value = MyMath.random(sourceCfg.playbackRateMin, sourceCfg.playbackRateMax);
-        src.connect(gainNode);
-        gainNode.connect(this.ctx.destination);
-        src.start(0);
+        try {
+            const sourceCfg = this.sources[type];
+            const buffer = this.buffers[type][Math.floor(Math.random() * this.buffers[type].length)];
+            const gainNode = this.ctx.createGain();
+            gainNode.gain.value = (sourceCfg.volume || 1) * scale;
+            const src = this.ctx.createBufferSource();
+            src.buffer = buffer;
+            src.playbackRate.value = 0.8 + Math.random() * 0.4;
+            src.connect(gainNode);
+            gainNode.connect(this.ctx.destination);
+            src.start(0);
+        } catch(e) {}
     },
-    resumeAll() {
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-        this.playSound("lift", 0); // Kích hoạt loa
-    }
+    resume() { if(this.ctx.state === 'suspended') this.ctx.resume(); }
 };
 
-// --- LOGIC HẠT (PHYSICS) ---
+// --- LOGIC HẠT (VISUAL) ---
 const COLOR_CODES = Object.values(COLOR);
 function randomColor() { return COLOR_CODES[Math.floor(Math.random() * COLOR_CODES.length)]; }
 
@@ -80,10 +79,10 @@ const Star = {
     active: {}, _pool: [], _new() { return {}; },
     add(x, y, color, angle, speed, life) {
         const instance = this._pool.pop() || this._new();
-        instance.visible = true; instance.heavy = false;
         instance.x = x; instance.y = y; instance.prevX = x; instance.prevY = y;
         instance.color = color; instance.speedX = Math.sin(angle) * speed; instance.speedY = Math.cos(angle) * speed;
-        instance.life = life; instance.fullLife = life; instance.spinAngle = Math.random() * PI_2; instance.spinSpeed = 0.8; 
+        instance.life = life; instance.fullLife = life; 
+        instance.spinAngle = Math.random() * PI_2; instance.spinSpeed = 0.8; 
         if(!this.active[color]) this.active[color] = [];
         this.active[color].push(instance);
         return instance;
@@ -105,80 +104,57 @@ const Spark = {
     returnInstance(instance) { this._pool.push(instance); }
 };
 
-// --- LỚP PHÁO HOA (GIỮ NGUYÊN ĐỂ CÓ TIẾNG RÍT/NỔ) ---
+// --- PHÁO HOA (SHELL) ---
 class Shell {
     constructor(options) {
         Object.assign(this, options);
         this.color = options.color || randomColor();
-        this.starLifeVariation = options.starLifeVariation || 0.125;
-        if (!this.starCount) {
-            const density = options.starDensity || 1;
-            const scaledSize = this.spreadSize / 54;
-            this.starCount = Math.max(6, scaledSize * scaledSize * density);
-        }
+        if (!this.starCount) this.starCount = 100;
     }
     launch(position, launchHeight) {
         const width = stageW; const height = stageH;
-        const hpad = 60; const vpad = 50;
+        const hpad = 60;
         const launchX = position * (width - hpad * 2) + hpad; 
         const launchY = height;
-        const burstY = (height - (height * 0.45)) - launchHeight * (height - (height * 0.45) - vpad);
+        const burstY = height - (height * launchHeight);
         const launchDistance = launchY - burstY;
         const launchVelocity = Math.pow(launchDistance * 0.04, 0.64);
 
         const comet = (this.comet = Star.add(
             launchX, launchY,
             typeof this.color === "string" && this.color !== "random" ? this.color : COLOR.White,
-			Math.PI,
-			launchVelocity * (this.horsetail ? 1.2 : 1),
-			launchVelocity * (this.horsetail ? 100 : 400)
+            Math.PI,
+            launchVelocity * (this.horsetail ? 1.2 : 1),
+            launchVelocity * (this.horsetail ? 100 : 400)
         ));
         
-        comet.heavy = true;
-        comet.spinRadius = 0.5;
+        comet.heavy = true; comet.spinRadius = 0.5;
         comet.onDeath = (c) => this.burst(c.x, c.y);
-        
-        // >>> TIẾNG RÍT BAY LÊN <<<
         soundManager.playSound("lift");
     }
     burst(x, y) {
         const speed = this.spreadSize / 96;
-        const starFactory = (angle, speedMult) => {
-            const star = Star.add(x, y, this.color, angle, speedMult * speed, this.starLife + Math.random() * this.starLife * this.starLifeVariation);
-            // Hiệu ứng nổ lách tách
+        const starFactory = (angle) => {
+            const star = Star.add(x, y, this.color, angle, speed, this.starLife);
             if(this.glitter === 'light') {
-                star.onDeath = (s) => {
-                    if(Math.random() < 0.2) soundManager.playSound("crackleSmall");
-                }
+                star.onDeath = (s) => { if(Math.random() < 0.2) soundManager.playSound("crackleSmall"); }
             }
         };
-        
-        // Tạo hình tròn nổ
         const count = this.starCount;
-        const R = 0.5 * Math.sqrt(count / Math.PI);
-        const C = 2 * R * Math.PI; const C_HALF = C / 2;
-        for (let i = 0; i <= C_HALF; i++) {
-            const ringAngle = (i / C_HALF) * Math.PI * 0.5;
-            const ringSize = Math.cos(ringAngle);
-            const partsPerFullRing = C * ringSize;
-            const angleInc = PI_2 / partsPerFullRing;
-            const angleOffset = Math.random() * angleInc;
-            for (let j = 0; j < partsPerFullRing; j++) {
-                starFactory(angleInc * j + angleOffset, ringSize);
-            }
+        for(let i=0; i<count; i++) {
+            const angle = (i/count) * PI_2;
+            starFactory(angle);
         }
-        
-        // >>> TIẾNG NỔ BÙM <<<
         if(this.shellSize < 2) soundManager.playSound("burstSmall");
         else soundManager.playSound("burst");
     }
 }
 
-// --- MAIN LOOP ---
+// --- VÒNG LẶP CHÍNH ---
 function update(frameTime, lag) {
     const speed = simSpeed * lag;
     const timeStep = frameTime * speed;
-    const drag = 1 - (1 - Star.airDrag) * speed; 
+    const drag = 1 - (1 - 0.98) * speed; 
     const grav = (timeStep / 1000) * GRAVITY;
 
     [Star, Spark].forEach(Type => {
@@ -210,7 +186,7 @@ function render(speed) {
     trailsCtx.fillRect(0, 0, width, height);
     ctx.clearRect(0, 0, width, height);
     
-    // Chế độ sáng rực
+    // Sáng rực
     trailsCtx.globalCompositeOperation = "lighten";
     trailsCtx.lineWidth = 3;
 
@@ -222,11 +198,11 @@ function render(speed) {
     });
     
     // Vẽ chữ (Spark)
-    trailsCtx.lineWidth = 2;
+    trailsCtx.lineWidth = 2.5; // Chữ đậm hơn
     Object.keys(Spark.active).forEach(color => {
         const sparks = Spark.active[color];
         trailsCtx.strokeStyle = color; trailsCtx.beginPath();
-        sparks.forEach(spark => { ctx.moveTo(spark.x, spark.y); ctx.lineTo(spark.prevX, spark.prevY); });
+        sparks.forEach(spark => { trailsCtx.moveTo(spark.x, spark.y); ctx.lineTo(spark.prevX, spark.prevY); });
         trailsCtx.stroke();
     });
 }
@@ -238,14 +214,12 @@ function handleResize() {
 }
 handleResize(); window.addEventListener("resize", handleResize);
 
-soundManager.preload();
-
 // =================================================================
 // 4. KỊCH BẢN: CHỮ MÀU LOANG & ĐẾM NGƯỢC
 // =================================================================
 
 function createWordBurst(wordText, x, y, scale = 1) {
-    // Chữ đậm để nhiều hạt hơn
+    // Font đậm để nhiều hạt màu
     const fontSize = Math.floor(110 * scale) + "px";
     var map = MyMath.literalLattice(wordText, 4, "Arial Black, Arial", fontSize); 
     if (!map) return;
@@ -254,13 +228,13 @@ function createWordBurst(wordText, x, y, scale = 1) {
     var dcenterY = map.height / 2;
 
     const dotStarFactory = (point) => {
-        // !!! QUAN TRỌNG: MỖI HẠT MỘT MÀU NGẪU NHIÊN !!!
+        // !!! MỖI HẠT MỘT MÀU NGẪU NHIÊN ĐỂ TẠO HIỆU ỨNG LOANG !!!
         const color = COLOR_CODES[Math.floor(Math.random() * COLOR_CODES.length)];
         Spark.add(
             point.x, point.y, color, 
             Math.random() * 2 * Math.PI, 
-            0.15, // Nổ chậm giữ hình
-            2500  // Sống lâu
+            0.1, // Nổ rất chậm để giữ hình dáng chữ
+            2500 // Sống 2.5s
         );
     };
 
@@ -269,7 +243,6 @@ function createWordBurst(wordText, x, y, scale = 1) {
         dotStarFactory({ x: x + (point.x - dcenterX), y: y + (point.y - dcenterY) });
     }
     
-    // Âm thanh nổ kèm chữ
     soundManager.playSound("burst");
     soundManager.playSound("crackle");
 }
@@ -277,28 +250,31 @@ function createWordBurst(wordText, x, y, scale = 1) {
 function launchShell(size = 1) {
     const shell = new Shell({
         shellSize: size, spreadSize: 300 + size * 100, starLife: 900 + size * 200, 
-        starDensity: 1.2, color: randomColor(), glitter: "light", glitterColor: COLOR.Gold 
+        color: randomColor(), glitter: "light", glitterColor: COLOR.Gold 
     });
     shell.launch(Math.random(), 1);
 }
 
-// HÀM CHẠY CHÍNH
+// HÀM CHẠY KỊCH BẢN (GỌI TỪ INDEX.HTML)
 window.startMyCountdown = function() {
+    // Bắt đầu tải nhạc ngay khi bấm nút (để trình duyệt cho phép)
+    soundManager.resume();
+    
     let count = 5;
     const interval = setInterval(() => {
-        // Hiện số 5, 4, 3, 2, 1 (Chữ to)
+        // Đếm ngược 5, 4, 3, 2, 1
         createWordBurst(count.toString(), stageW/2, stageH/2, 1.5);
-        launchShell(2); // Bắn pháo kèm theo (sẽ có tiếng rít)
+        launchShell(2); 
 
         count--;
         if (count < 0) {
             clearInterval(interval);
             setTimeout(() => {
-                // HAPPY NEW YEAR
-                createWordBurst("HAPPY", stageW/2, stageH/2 - 100, 0.8);
+                // HAPPY NEW YEAR (Trên/Dưới)
+                createWordBurst("HAPPY", stageW/2, stageH/2 - 120, 0.8);
                 createWordBurst("NEW YEAR", stageW/2, stageH/2 + 30, 0.8);
                 
-                // Finale (Bắn liên tục)
+                // Bắn liên thanh
                 let finale = 0;
                 const fin = setInterval(() => {
                     launchShell(Math.random()*2 + 2);
@@ -306,9 +282,10 @@ window.startMyCountdown = function() {
                     if(finale > 15) clearInterval(fin);
                 }, 200);
 
-                // Hiện 2026
+                // HIỆN 2026 SAU 3.5 GIÂY
                 setTimeout(() => {
                     createWordBurst("2026", stageW/2, stageH/2, 1.8);
+                    // Bồi thêm lớp nữa cho sáng rực
                     setTimeout(() => createWordBurst("2026", stageW/2, stageH/2, 1.8), 200);
                 }, 3500);
 
@@ -316,3 +293,16 @@ window.startMyCountdown = function() {
         }
     }, 1000);
 };
+
+// === KHỞI ĐỘNG NGAY LẬP TỨC ===
+// Không chờ tải ảnh/nhạc gì cả, vào là chạy loop ngay
+soundManager.preload(); 
+const loading = document.getElementById("start-overlay"); 
+if(!loading) { // Nếu không có nút bấm (debug) thì chạy luôn
+    togglePause(false); 
+    configDidUpdate();
+} else {
+    // Nếu có nút bấm, chỉ cần init các thông số
+    togglePause(false);
+    configDidUpdate();
+}
