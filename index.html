@@ -3,278 +3,321 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy New Year 2026 - Nguyen Duc Tien</title>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@900&display=swap" rel="stylesheet">
+    <title>Happy New Year 2026 - Cinematic Particles</title>
     <style>
         body {
             margin: 0;
-            overflow: hidden;
             background: #000;
-            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            font-family: 'Verdana', sans-serif;
         }
         canvas {
             display: block;
-            cursor: crosshair;
-        }
-        /* Màn hình chờ bấm để phát nhạc */
-        #start-overlay {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 999;
+        }
+        #click-me {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             color: #fff;
-            transition: opacity 0.5s;
-        }
-        #start-btn {
-            padding: 15px 40px;
-            font-size: 24px;
-            background: linear-gradient(45deg, #ff00cc, #3333ff);
-            border: none;
-            color: white;
-            border-radius: 50px;
+            border: 1px solid #fff;
+            padding: 15px 30px;
             cursor: pointer;
-            box-shadow: 0 0 20px rgba(255, 0, 204, 0.5);
-            font-family: 'Montserrat', sans-serif;
-            text-transform: uppercase;
-            font-weight: bold;
-            animation: pulse 1.5s infinite;
+            z-index: 100;
+            background: rgba(0,0,0,0.7);
+            letter-spacing: 2px;
+            transition: 0.3s;
         }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        #click-me:hover {
+            background: #fff;
+            color: #000;
         }
     </style>
 </head>
 <body>
 
-<div id="start-overlay">
-    <h1 style="font-family: 'Dancing Script'; margin-bottom: 20px; font-size: 3rem; color: #ffd700;">Chào mừng năm mới</h1>
-    <button id="start-btn">BẤM ĐỂ BẮT ĐẦU 🎆</button>
-</div>
-
-<audio id="audio" loop>
-    <source src="music.mp3" type="audio/mpeg">
-</audio>
-
-<canvas id="canvas"></canvas>
+<div id="click-me">CLICK TO START 2026</div>
+<canvas id="canvas1"></canvas>
+<audio id="bg-music" src="music.mp3"></audio>
 
 <script>
-    // --- CẤU HÌNH ---
-    const CONFIG = {
-        fireworkChance: 0.05,  // Tỉ lệ xuất hiện pháo (càng cao càng dày)
-        particleCount: 150,    // Số hạt mỗi quả pháo (càng cao càng đẹp nhưng lag)
-        gravity: 0.05,         // Trọng lực rơi
-        friction: 0.96,        // Lực cản không khí
-        textString: "HAPPY NEW YEAR\n2026", // Nội dung chữ
+    const canvas = document.getElementById('canvas1');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particlesArray = [];
+    let fireworksArray = [];
+    
+    // Cấu hình chữ
+    const textConfig = {
+        size: 2,         // Kích thước hạt
+        gap: 3,          // Khoảng cách quét pixel (càng nhỏ càng mịn nhưng nặng máy)
+        speed: 15,       // Tốc độ tụ lại
+        mouseRadius: 200 // Bán kính tương tác chuột
     };
 
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const audio = document.getElementById('audio');
-    const startOverlay = document.getElementById('start-overlay');
-    const startBtn = document.getElementById('start-btn');
+    // Chuỗi kịch bản
+    const textSequence = ["5", "4", "3", "2", "1", "HAPPY", "NEW YEAR", "2026"];
+    let currentTextIndex = 0;
+    let isFinished = false;
 
-    let canvasWidth = window.innerWidth;
-    let canvasHeight = window.innerHeight;
-    let fireworks = [];
-    let particles = [];
-    let isPlaying = false;
-
-    // Màu sắc rực rỡ
-    function randomColor() {
-        const hue = Math.floor(Math.random() * 360);
-        return `hsl(${hue}, 100%, 60%)`;
-    }
-
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-
-    window.addEventListener('resize', () => {
-        canvasWidth = window.innerWidth;
-        canvasHeight = window.innerHeight;
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
+    // Xử lý chuột
+    const mouse = { x: null, y: null, radius: 150 };
+    window.addEventListener('mousemove', (e) => {
+        mouse.x = e.x;
+        mouse.y = e.y;
     });
 
-    // --- LỚP PHÁO HOA (Vật lý xịn) ---
-    class Firework {
-        constructor() {
-            this.x = Math.random() * canvasWidth;
-            this.y = canvasHeight;
-            this.targetX = Math.random() * canvasWidth;
-            this.targetY = Math.random() * (canvasHeight / 2); // Nổ ở nửa trên màn hình
-            this.speed = 3;
-            this.angle = Math.atan2(this.targetY - this.y, this.targetX - this.x);
-            this.velocities = {
-                x: Math.cos(this.angle) * 15, // Tốc độ bay lên nhanh
-                y: Math.sin(this.angle) * 15
-            };
-            this.hue = Math.random() * 360;
-            this.brightness = Math.random() * 50 + 50;
-            this.history = []; // Tạo đuôi
+    // --- CLASS 1: PARTICLE (HẠT CÁT TẠO CHỮ) ---
+    class Particle {
+        constructor(x, y) {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.targetX = x;
+            this.targetY = y;
+            this.size = textConfig.size;
+            // Màu vàng gold sang trọng pha trắng
+            this.color = Math.random() > 0.8 ? '#ffffff' : '#ffd700'; 
+            this.density = (Math.random() * 30) + 1;
         }
 
-        update(index) {
-            this.history.push({x: this.x, y: this.y});
-            if(this.history.length > 5) this.history.shift();
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.rect(this.x, this.y, this.size, this.size);
+            ctx.closePath();
+            ctx.fill();
+        }
 
-            this.x += this.velocities.x * 0.5; // Điều chỉnh tốc độ
-            this.y += this.velocities.y * 0.5;
+        update() {
+            // 1. Tương tác chuột (đẩy hạt ra)
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let distance = Math.sqrt(dx*dx + dy*dy);
+            let forceDirectionX = dx / distance;
+            let forceDirectionY = dy / distance;
+            let maxDistance = mouse.radius;
+            let force = (maxDistance - distance) / maxDistance;
+            let directionX = forceDirectionX * force * this.density;
+            let directionY = forceDirectionY * force * this.density;
 
-            // Kiểm tra đến đích chưa
-            const dist = Math.hypot(this.x - this.targetX, this.y - this.targetY);
-            if (dist < 30 || this.velocities.y >= 0) { // Đã đến đích hoặc bắt đầu rơi xuống
-                createParticles(this.x, this.y, this.hue);
-                fireworks.splice(index, 1);
+            if (distance < mouse.radius) {
+                this.x -= directionX * 3;
+                this.y -= directionY * 3;
+            } else {
+                // 2. Bay về vị trí tạo hình chữ (Morphing Logic)
+                if (this.x !== this.targetX) {
+                    let dx = this.x - this.targetX;
+                    this.x -= dx / 10; // Easing motion
+                }
+                if (this.y !== this.targetY) {
+                    let dy = this.y - this.targetY;
+                    this.y -= dy / 10;
+                }
+            }
+        }
+        
+        // Đổi mục tiêu bay đến
+        setTarget(x, y) {
+            this.targetX = x;
+            this.targetY = y;
+        }
+    }
+
+    // --- CLASS 2: FIREWORK (PHÁO HOA THẬT) ---
+    class Firework {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = canvas.height;
+            this.targetY = Math.random() * (canvas.height / 2.5);
+            this.speed = Math.random() * 3 + 8; // Bắn nhanh
+            this.radius = 3;
+            this.angle = Math.PI / 2; // Bay thẳng lên
+            this.exploded = false;
+            this.shards = [];
+            this.hue = Math.random() * 360;
+        }
+
+        update() {
+            if (!this.exploded) {
+                this.y -= this.speed;
+                this.speed *= 0.98; // Trọng lực kéo chậm lại
+                if (this.speed < 2 || this.y < this.targetY) {
+                    this.explode();
+                }
+            } else {
+                for (let i = 0; i < this.shards.length; i++) {
+                    this.shards[i].update();
+                    if (this.shards[i].alpha <= 0) {
+                        this.shards.splice(i, 1);
+                        i--;
+                    }
+                }
             }
         }
 
         draw() {
-            ctx.beginPath();
-            if(this.history.length > 0){
-                ctx.moveTo(this.history[0].x, this.history[0].y);
-                for(let i = 0; i < this.history.length; i++) {
-                    ctx.lineTo(this.history[i].x, this.history[i].y);
-                }
+            if (!this.exploded) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `hsl(${this.hue}, 100%, 70%)`;
+                ctx.fill();
+            } else {
+                this.shards.forEach(shard => shard.draw());
             }
-            ctx.lineTo(this.x, this.y);
-            ctx.strokeStyle = `hsl(${this.hue}, 100%, 50%)`;
-            ctx.lineWidth = 2;
-            ctx.stroke();
+        }
+
+        explode() {
+            this.exploded = true;
+            for (let i = 0; i < 80; i++) { // Số lượng mảnh vỡ
+                this.shards.push(new Shard(this.x, this.y, this.hue));
+            }
         }
     }
 
-    // --- LỚP HẠT NỔ (Hiệu ứng bung tỏa) ---
-    class Particle {
+    class Shard {
         constructor(x, y, hue) {
             this.x = x;
             this.y = y;
             this.hue = hue;
-            this.angle = Math.random() * Math.PI * 2;
-            // Tốc độ nổ mạnh ngẫu nhiên
-            const velocity = Math.random() * 15 + 2; 
-            this.vx = Math.cos(this.angle) * velocity;
-            this.vy = Math.sin(this.angle) * velocity;
-            this.friction = CONFIG.friction;
-            this.gravity = CONFIG.gravity;
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = Math.random() * 5 + 2;
+            this.vx = Math.cos(angle) * velocity;
+            this.vy = Math.sin(angle) * velocity;
+            this.friction = 0.96; // Ma sát không khí
+            this.gravity = 0.1;   // Trọng lực rơi
             this.alpha = 1;
-            this.decay = Math.random() * 0.015 + 0.005; // Tan biến chậm
+            this.decay = Math.random() * 0.02 + 0.01;
         }
 
-        update(index) {
+        update() {
             this.vx *= this.friction;
             this.vy *= this.friction;
-            this.vy += this.gravity;
+            this.vy += this.gravity; // Rơi xuống
             this.x += this.vx;
             this.y += this.vy;
             this.alpha -= this.decay;
-
-            if (this.alpha <= 0) {
-                particles.splice(index, 1);
-            }
         }
 
         draw() {
-            ctx.save();
             ctx.globalAlpha = this.alpha;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
             ctx.fillStyle = `hsl(${this.hue}, 100%, 60%)`;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
             ctx.fill();
-            ctx.restore();
+            ctx.globalAlpha = 1;
         }
     }
 
-    function createParticles(x, y, hue) {
-        for (let i = 0; i < CONFIG.particleCount; i++) {
-            particles.push(new Particle(x, y, hue));
+    // --- HÀM XỬ LÝ TEXT SCANNING ---
+    function initText(text) {
+        // 1. Vẽ chữ lên canvas (ẩn)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        let fontSize = Math.min(canvas.width, canvas.height) / 4; // Font to
+        if (text.length > 4) fontSize = fontSize / 2.5; // Chữ dài thì font nhỏ lại
+        
+        ctx.font = `900 ${fontSize}px Verdana`; // Font dày
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, canvas.width/2, canvas.height/2);
+
+        // 2. Quét dữ liệu pixel
+        const textCoordinates = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = textCoordinates.data;
+        
+        const newCoordinates = [];
+        
+        for (let y = 0; y < textCoordinates.height; y += textConfig.gap) {
+            for (let x = 0; x < textCoordinates.width; x += textConfig.gap) {
+                // Nếu pixel có màu (alpha > 128)
+                if (data[(y * 4 * textCoordinates.width) + (x * 4) + 3] > 128) {
+                    newCoordinates.push({x: x, y: y});
+                }
+            }
+        }
+
+        // 3. Điều phối hạt (Magic happens here)
+        // Nếu số hạt hiện tại ít hơn số điểm ảnh cần thiết -> thêm hạt
+        if (particlesArray.length < newCoordinates.length) {
+            const diff = newCoordinates.length - particlesArray.length;
+            for(let i=0; i<diff; i++){
+                particlesArray.push(new Particle(canvas.width/2, canvas.height/2));
+            }
+        } 
+        // Nếu thừa hạt -> ẩn bớt đi (đẩy ra ngoài màn hình hoặc cho target về 0)
+        else if (particlesArray.length > newCoordinates.length) {
+            particlesArray.splice(newCoordinates.length);
+        }
+
+        // Gán target mới cho từng hạt
+        for (let i = 0; i < newCoordinates.length; i++) {
+            particlesArray[i].setTarget(newCoordinates[i].x, newCoordinates[i].y);
         }
     }
 
-    // --- VẼ CHỮ NGHỆ THUẬT ---
-    function drawText() {
-        ctx.save();
-        // Cấu hình chữ
-        ctx.font = "bold 8vw 'Dancing Script'"; // Font thư pháp
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        
-        // Tạo Gradient (Màu cầu vồng pha trộn)
-        const gradient = ctx.createLinearGradient(0, 0, canvasWidth, 0);
-        gradient.addColorStop(0, "#ff0000");
-        gradient.addColorStop(0.2, "#ff7f00");
-        gradient.addColorStop(0.4, "#ffff00");
-        gradient.addColorStop(0.6, "#00ff00");
-        gradient.addColorStop(0.8, "#0000ff");
-        gradient.addColorStop(1, "#8b00ff");
-
-        ctx.fillStyle = gradient;
-        
-        // Hiệu ứng bóng đổ phát sáng (Neon Glow)
-        ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
-        ctx.shadowBlur = 20;
-
-        // Tách dòng
-        const lines = CONFIG.textString.split('\n');
-        const lineHeight = canvasWidth * 0.1; // Khoảng cách dòng theo độ rộng màn hình
-
-        lines.forEach((line, index) => {
-            const yOffset = (index - (lines.length - 1) / 2) * lineHeight;
-            ctx.fillText(line, canvasWidth / 2, canvasHeight / 2 + yOffset);
-            
-            // Vẽ viền chữ cho nổi
-            ctx.strokeStyle = "white";
-            ctx.lineWidth = 1;
-            ctx.strokeText(line, canvasWidth / 2, canvasHeight / 2 + yOffset);
-        });
-
-        ctx.restore();
-    }
-
-    // --- VÒNG LẶP CHÍNH ---
+    // --- MAIN LOOP ---
     function animate() {
-        if (!isPlaying) return;
-        requestAnimationFrame(animate);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Tạo đuôi mờ cho pháo hoa
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Tạo vệt mờ (Trail effect)
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Màu đen mờ để làm nhòe đuôi
-        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-        // Vẽ chữ luôn nằm trên nền nhưng dưới pháo hoa
-        drawText();
-
-        // Tạo pháo hoa ngẫu nhiên
-        if (Math.random() < CONFIG.fireworkChance) {
-            fireworks.push(new Firework());
+        // Vẽ particles (chữ)
+        for (let i = 0; i < particlesArray.length; i++) {
+            particlesArray[i].draw();
+            particlesArray[i].update();
         }
 
-        fireworks.forEach((firework, index) => firework.update(index));
-        fireworks.forEach(firework => firework.draw());
-
-        particles.forEach((particle, index) => particle.update(index));
-        particles.forEach(particle => particle.draw());
+        // Vẽ pháo hoa (nếu đã đếm xong)
+        if (isFinished) {
+            if (Math.random() < 0.05) { // Tỉ lệ bắn pháo
+                fireworksArray.push(new Firework());
+            }
+            for (let i = 0; i < fireworksArray.length; i++) {
+                fireworksArray[i].update();
+                fireworksArray[i].draw();
+                if (fireworksArray[i].exploded && fireworksArray[i].shards.length === 0) {
+                    fireworksArray.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+        
+        requestAnimationFrame(animate);
     }
 
-    // --- XỬ LÝ SỰ KIỆN ---
-    startBtn.addEventListener('click', () => {
-        isPlaying = true;
-        startOverlay.style.opacity = '0';
-        setTimeout(() => {
-            startOverlay.style.display = 'none';
-        }, 500);
+    // --- LOGIC ĐẾM NGƯỢC ---
+    function startCountdown() {
+        let interval = setInterval(() => {
+            currentTextIndex++;
+            if (currentTextIndex < textSequence.length) {
+                initText(textSequence[currentTextIndex]);
+            } else {
+                clearInterval(interval);
+                isFinished = true; // Bắt đầu bắn pháo hoa
+            }
+        }, 1500); // Tốc độ chuyển chữ (1.5s)
+    }
+
+    // Bắt đầu
+    document.getElementById('click-me').addEventListener('click', function() {
+        this.style.display = 'none';
+        document.getElementById('bg-music').play().catch(e => console.log(e));
         
-        // Phát nhạc (nếu có lỗi file thì bỏ qua)
-        audio.play().catch(e => console.log("Chưa có file nhạc hoặc lỗi phát: ", e));
-        
-        animate();
+        initText(textSequence[0]); // Hiện số đầu tiên
+        animate(); // Chạy loop đồ họa
+        startCountdown(); // Chạy loop logic đổi chữ
+    });
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        initText(textSequence[currentTextIndex]);
     });
 
 </script>
