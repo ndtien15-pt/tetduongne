@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Happy New Year 2026</title>
+    <title>Happy New Year 2026 - Brilliant Colors</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <style>
         body { margin: 0; overflow: hidden; background: #000; }
@@ -19,6 +19,13 @@
             border: 2px solid #ffd700; background: transparent; 
             cursor: pointer; font-weight: bold; text-transform: uppercase;
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            animation: pulse 1.5s infinite;
+            font-family: Arial, sans-serif;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
         }
     </style>
 </head>
@@ -33,20 +40,19 @@
     <canvas id="main-canvas"></canvas>
 </div>
 
-<audio id="bg-music" src="music.mp3" loop></audio>
-
-<script src="./js/fscreen.js"></script>
-<script src="./js/Stage.js"></script>
-<script src="./js/MyMath.js"></script>
-<script src="./js/script.js"></script>
+<script src="fscreen.js"></script>
+<script src="Stage.js"></script>
+<script src="MyMath.js"></script>
+<script src="script.js"></script>
 
 <script>
     document.getElementById('btn-play').addEventListener('click', function() {
         document.getElementById('loading-screen').style.display = 'none';
-        const audio = document.getElementById('bg-music');
-        if(audio) audio.play().catch(() => console.log('Không tìm thấy nhạc'));
         
-        // Bắt đầu kịch bản đếm ngược từ script.js
+        // Kích hoạt lại âm thanh (nếu bị trình duyệt chặn)
+        if(soundManager && soundManager.resumeAll) soundManager.resumeAll();
+
+        // Bắt đầu kịch bản đếm ngược
         if(window.startMyCountdown) window.startMyCountdown();
     });
 </script>
