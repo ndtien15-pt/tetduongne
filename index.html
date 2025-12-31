@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Trình mô phỏng pháo hoa - Happy New Year 2026</title>
+        <title>Happy New Year 2026 - Countdown</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -14,37 +14,26 @@
         
         <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@900&display=swap" rel="stylesheet">
 
-        <style>
-            /* --- PHẦN CODE CŨ CỦA BẠN (GIỮ NGUYÊN) --- */
-            .shape-gallery { display: flex; gap: 24px; justify-content: center; align-items: center; padding: 16px; }
-            .shape-card { width: 240px; height: 240px; position: relative; }
-            .shape-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
-            .shape-circle img { border-radius: 50%; }
-            .shape-heart img { clip-path: path("M 120 224 C 8 144 0 72 60 40 C 96 24 120 40 120 56 C 120 40 144 24 180 40 C 240 72 232 144 120 224 Z"); -webkit-clip-path: path("M 120 224 C 8 144 0 72 60 40 C 96 24 120 40 120 56 C 120 40 144 24 180 40 C 240 72 232 144 120 224 Z"); }
-            .wishes-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; transform-origin: center center; transform-style: preserve-3d; will-change: transform; }
-            .wishes-layer.dragging { transition: none; }
-            .wish-wrapper { position: absolute; bottom: -3rem; left: 50%; transform: translateX(-50%) translateY(0); opacity: 0; pointer-events: none; }
-            .wish-text { display: inline-block; font-size: 1.1rem; padding: 0.4rem 1rem; border-radius: 999px; color: #ff9ad9; text-shadow: 0 0 6px rgba(255, 105, 180, 0.9), 0 0 18px rgba(255, 20, 147, 0.8); background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 192, 203, 0.7); box-shadow: 0 0 14px rgba(255, 105, 180, 0.7), 0 0 32px rgba(255, 20, 147, 0.4); white-space: nowrap; transform-origin: center center; pointer-events: auto; }
-            @media (max-width: 768px) { .wish-text { font-size: 0.9rem; padding: 0.35rem 1rem; max-width: 92vw; min-width: 200px; white-space: normal; word-wrap: break-word; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } }
-            @media (max-width: 480px) { .wish-text { font-size: 0.8rem; padding: 0.3rem 0.85rem; max-width: 94vw; min-width: 180px; } }
-            @keyframes wishFloatUp { 0% { opacity: 0; transform: translateX(-50%) translateY(10vh); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-110vh); } }
-            .wish-animate { animation: wishFloatUp 7s linear forwards; }
-            .wish-image { display: inline-block; width: 120px; height: 120px; object-fit: cover; border-radius: 12px; border: 3px solid rgba(255, 192, 203, 0.9); box-shadow: 0 0 20px rgba(255, 105, 180, 0.8); animation: imageGlow 2s ease-in-out infinite alternate; }
-            .pause-btn, .settings-btn { display: none !important; }
+        <link href="./fonts/css.css" rel="stylesheet" />
+        <link rel="stylesheet" href="./css/style.css" />
 
-            /* --- PHẦN CSS MỚI CHO ĐẾM NGƯỢC & TEXT 2026 --- */
+        <style>
+            /* --- CSS CHO ĐẾM NGƯỢC & HIỆU ỨNG CHỮ --- */
+            body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+
+            /* Lớp phủ chứa số đếm ngược và chữ */
             #countdown-overlay {
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
-                z-index: 9999; /* Luôn nằm trên cùng */
+                z-index: 9999;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                pointer-events: none; /* Để click xuyên qua được nếu cần */
+                pointer-events: none; /* Cho phép click xuyên qua để chỉnh pháo hoa */
                 text-align: center;
             }
 
@@ -61,7 +50,7 @@
             .happy-text {
                 font-family: 'Dancing Script', cursive;
                 font-size: 5rem;
-                color: #ffd700; /* Màu vàng kim */
+                color: #ffd700;
                 text-shadow: 0 0 10px #ffaa00, 0 0 20px #ffaa00, 0 0 40px #ff0000;
                 opacity: 0;
                 transform: scale(0.5);
@@ -89,21 +78,6 @@
                 position: relative;
             }
 
-            /* Hiệu ứng lấp lánh cho 2026 */
-            .year-art::after {
-                content: '2026';
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(45deg, transparent 45%, #fff 50%, transparent 55%);
-                background-size: 200% 200%;
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                animation: shine 3s infinite;
-            }
-
             .year-art.show {
                 opacity: 1;
                 transform: translateY(0);
@@ -115,20 +89,21 @@
                 100% { transform: scale(0); opacity: 0; }
             }
 
-            @keyframes shine {
-                0% { background-position: -100%; }
-                100% { background-position: 200%; }
-            }
-
             @media (max-width: 768px) {
                 .countdown-number { font-size: 8rem; }
                 .happy-text { font-size: 3rem; }
                 .year-art { font-size: 4rem; }
             }
+
+            /* Ẩn các nút không cần thiết */
+            .pause-btn, .settings-btn, .stop-wishes-btn { display: none !important; }
+            /* Ẩn layer lời chúc */
+            #wishes-layer { display: none !important; }
         </style>
 
-        <link href="./fonts/css.css" rel="stylesheet" />
-        <link rel="stylesheet" href="./css/style.css" />
+        <script>
+            var WISH_MESSAGES = []; 
+        </script>
     </head>
     <body>
         
@@ -151,21 +126,23 @@
         <div class="container">
             <div class="stage-container remove">
                 <div class="wishes-layer" id="wishes-layer"></div>
+                
                 <div class="canvas-container">
                     <canvas id="trails-canvas"> </canvas>
                     <canvas id="main-canvas"> </canvas>
                 </div>
+                
                 <div class="controls">
                     <div class="btn pause-btn"><svg fill="white" width="24" height="24"><use href="#icon-pause" xlink:href="#icon-pause"></use></svg></div>
                     <div class="btn sound-btn"><svg fill="white" width="24" height="24"><use href="#icon-sound-off" xlink:href="#icon-sound-off"></use></svg></div>
                     <div class="btn stop-wishes-btn"><svg fill="white" width="24" height="24"><use href="#icon-stop-wishes" xlink:href="#icon-stop-wishes"></use></svg></div>
                     <div class="btn settings-btn"><svg fill="white" width="24" height="24"><use href="#icon-settings" xlink:href="#icon-settings"></use></svg></div>
                 </div>
+                
                 <div class="menu hide">
                     <div class="menu__inner-wrap">
                         <div class="btn btn--bright close-menu-btn"><svg fill="white" width="24" height="24"><use href="#icon-close" xlink:href="#icon-close"></use></svg></div>
                         <div class="menu__header">Cài đặt</div>
-                        <div class="menu__subheader">Để biết thêm thông tin hãy nhấp vào bất kỳ nhãn nào</div>
                         <form>
                             <div class="form-option form-option--select"><label class="shell-type-label"> Loại pháo hoa </label><select class="shell-type"></select></div>
                             <div class="form-option form-option--select"><label class="shell-size-label"> Kích thước pháo hoa </label><select class="shell-size"></select></div>
@@ -173,7 +150,9 @@
                             <div class="form-option form-option--select"><label class="sky-lighting-label"> Độ sáng bầu trời </label><select class="sky-lighting"></select></div>
                             <div class="form-option form-option--select"><label class="scaleFactor-label"> Thu phóng </label><select class="scaleFactor"></select></div>
                             <div class="form-option form-option--checkbox"><label class="word-shell-label"> Pháo hoa chữ </label><input class="word-shell" type="checkbox" /></div>
+                            
                             <div class="form-option form-option--checkbox"><label class="auto-launch-label"> Tự động bắn pháo </label><input class="auto-launch" type="checkbox" /></div>
+                            
                             <div class="form-option form-option--checkbox form-option--finale-mode"><label class="finale-mode-label"> Bắn nhiều pháo hoa cùng lúc </label><input class="finale-mode" type="checkbox" /></div>
                             <div class="form-option form-option--checkbox"><label class="hide-controls-label"> Ẩn nút điều khiển </label><input class="hide-controls" type="checkbox" /></div>
                             <div class="form-option form-option--checkbox form-option--fullscreen"><label class="fullscreen-label"> Toàn màn hình </label><input class="fullscreen" type="checkbox" /></div>
@@ -182,6 +161,7 @@
                     </div>
                 </div>
             </div>
+            
             <div class="help-modal">
                 <div class="help-modal__overlay"></div>
                 <div class="help-modal__dialog">
@@ -200,7 +180,8 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const contentArea = document.getElementById('content-area');
-                let count = 5;
+                // SỐ GIÂY ĐẾM NGƯỢC (Bạn có thể sửa số 5 thành số khác)
+                let count = 5; 
 
                 // Hàm hiển thị số đếm ngược
                 function showCount() {
@@ -210,7 +191,7 @@
                         count--;
                         setTimeout(showCount, 1000);
                     } else {
-                        // Khi đếm xong
+                        // Khi đếm về 0 xong
                         triggerNewYear();
                     }
                 }
@@ -225,33 +206,33 @@
                     // 2. Hiển thị chữ Happy New Year
                     contentArea.innerHTML = `<div class="happy-text">HAPPY NEW YEAR<br>2026</div>`;
                     
-                    // Thêm class để kích hoạt animation fade in
+                    // Thêm class để kích hoạt animation hiện ra
                     setTimeout(() => {
                         const happyText = document.querySelector('.happy-text');
                         if(happyText) happyText.classList.add('show');
                     }, 100);
 
-                    // 3. Sau 3 giây, ẩn chữ Happy New Year và hiện số 2026 nghệ thuật
+                    // 3. Sau 3 giây, ẩn chữ cũ và hiện số 2026
                     setTimeout(() => {
                         const happyText = document.querySelector('.happy-text');
                         if(happyText) {
-                            happyText.style.opacity = '0'; // Fade out
-                            happyText.style.transform = 'scale(2)'; // Zoom out effect
+                            happyText.style.opacity = '0'; // Làm mờ đi
+                            happyText.style.transform = 'scale(2)'; // Phóng to biến mất
                         }
 
+                        // Đợi 1 giây cho chữ cũ biến mất hẳn rồi mới hiện số mới
                         setTimeout(() => {
                             contentArea.innerHTML = `<div class="year-art">2026</div>`;
                             setTimeout(() => {
                                 const yearArt = document.querySelector('.year-art');
                                 if(yearArt) yearArt.classList.add('show');
                             }, 100);
-                        }, 1000); // Đợi fade out xong mới hiện số mới
+                        }, 1000); 
 
-                    }, 4000); // Thời gian hiện chữ Happy New Year
+                    }, 4000); // Chữ Happy New Year hiện trong 4 giây
                 }
 
-                // Bắt đầu đếm ngược ngay khi tải trang (hoặc bạn có thể gắn vào nút click nào đó)
-                // Đợi 1 chút để trang load xong hẳn tài nguyên
+                // Bắt đầu chạy đếm ngược sau 1 giây khi web tải xong
                 setTimeout(showCount, 1000);
             });
         </script>
