@@ -2,471 +2,50 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy New Year 2026 - Ultimate Physics</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@900&display=swap" rel="stylesheet">
+    <title>Happy New Year 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <style>
-        body {
-            background-color: #000;
-            margin: 0;
-            overflow: hidden;
-            user-select: none;
-        }
-        
-        /* Canvas pháo hoa nằm dưới cùng */
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-
-        /* Lớp chứa chữ nằm đè lên trên */
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            pointer-events: none;
-        }
-
-        /* --- THIẾT KẾ CHỮ CINEMATIC --- */
-        .cinematic-text {
-            font-family: 'Cinzel', serif;
-            position: absolute;
-            opacity: 0;
-            transform: scale(3); /* Bắt đầu phóng to */
-            transition: all 0.8s cubic-bezier(0.1, 0.7, 1.0, 0.1);
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        /* Hiệu ứng khi hiện chữ */
-        .cinematic-text.visible {
-            opacity: 1;
-            transform: scale(1); /* Thu nhỏ về bình thường */
-        }
-
-        /* Hiệu ứng khi ẩn chữ */
-        .cinematic-text.hidden {
-            opacity: 0;
-            transform: scale(0.5) translateY(-50px);
-            filter: blur(10px);
-            transition: all 0.5s ease-in;
-        }
-
-        /* Số đếm ngược */
-        .countdown-num {
-            font-size: 20vw;
-            color: #fff;
-            text-shadow: 0 0 50px rgba(255,255,255,0.8);
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        /* Chữ Happy New Year */
-        .happy-text {
-            font-size: 5vw;
-            background: linear-gradient(90deg, #ff00cc, #3333ff, #ff00cc);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 900;
-            animation: shine 3s linear infinite;
-        }
-        @keyframes shine { to { background-position: 200% center; } }
-
-        /* Chữ 2026 Vàng Gold Sang Trọng */
-        .gold-2026 {
-            font-size: 18vw;
-            /* Tạo màu vàng kim loại */
-            background: linear-gradient(to bottom, #cfc09f 22%,#634f2c 24%, #cfc09f 26%, #cfc09f 27%,#ffecb3 40%,#3a2c0f 78%); 
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            color: #fff;
-            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
-            font-weight: bold;
-        }
-
-        /* Nút Start */
-        #start-btn-container {
+        body { margin: 0; overflow: hidden; background: #000; }
+        canvas { display: block; }
+        #start-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 999; pointer-events: auto; transition: opacity 0.5s;
+            background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 999;
         }
-        button {
-            padding: 20px 50px; font-size: 22px;
-            background: transparent; color: #ffd700;
-            border: 2px solid #ffd700; cursor: pointer;
-            font-family: 'Cinzel', serif; letter-spacing: 2px;
-            transition: 0.3s;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
-        }
-        button:hover {
-            background: #ffd700; color: #000;
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
+        #btn-start {
+            padding: 15px 40px; border: 2px solid #ffd700; color: #ffd700; background: transparent;
+            font-size: 20px; font-weight: bold; cursor: pointer; text-transform: uppercase;
         }
     </style>
 </head>
 <body>
 
-<div id="start-btn-container">
-    <button id="btn-start">KHAI HỎA 2026</button>
+<div id="start-overlay">
+    <button id="btn-start">BẤM ĐỂ BẮT ĐẦU</button>
 </div>
 
-<audio id="bg-music" src="music.mp3"></audio>
+<audio id="audio" src="music.mp3"></audio>
 
-<canvas id="main-canvas"></canvas>
-
-<div id="ui-layer">
-    <div id="text-countdown" class="cinematic-text countdown-num">5</div>
-    <div id="text-happy" class="cinematic-text happy-text">HAPPY NEW YEAR</div>
-    <div id="text-2026" class="cinematic-text gold-2026">2026</div>
+<div class="canvas-container">
+    <canvas id="trails-canvas"></canvas>
+    <canvas id="main-canvas"></canvas>
 </div>
+
+<script src="./js/fscreen.js"></script>
+<script src="./js/Stage.js"></script>
+<script src="./js/MyMath.js"></script>
+<script src="./js/script.js"></script>
 
 <script>
-/**
- * PHẦN 1: PHYSICS ENGINE (Lõi vật lý từ Nianbroken)
- * Đã được tối ưu và gộp gọn vào đây.
- */
-const GRAVITY = 0.9; 
-const COLOR = { Red: "#ff0043", Green: "#14fc56", Blue: "#1e7fff", Purple: "#e60aff", Gold: "#ffbf36", White: "#ffffff" };
-const PI_2 = Math.PI * 2;
-
-// --- MYMATH (Toán học) ---
-const MyMath = {
-    toRad: Math.PI / 180,
-    random: (min, max) => Math.random() * (max - min) + min,
-    randomInt: (min, max) => ((Math.random() * (max - min + 1)) | 0) + min,
-    randomChoice: (choices) => choices[(Math.random() * choices.length) | 0],
-    clamp: (num, min, max) => Math.min(Math.max(num, min), max)
-};
-
-// --- STAGE (Quản lý Canvas) ---
-const Stage = (function() {
-    function Stage(canvas) {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext("2d");
-        this.width = canvas.width = window.innerWidth;
-        this.height = canvas.height = window.innerHeight;
-    }
-    Stage.prototype.resize = function() {
-        this.width = this.canvas.width = window.innerWidth;
-        this.height = this.canvas.height = window.innerHeight;
-    };
-    return Stage;
-})();
-
-const mainStage = new Stage(document.getElementById("main-canvas"));
-
-// --- LỚP STAR (Hạt pháo hoa) ---
-const Star = {
-    active: {},
-    _pool: [],
-    _new() { return {}; },
-    add(x, y, color, angle, speed, life, speedOffX, speedOffY) {
-        const instance = this._pool.pop() || this._new();
-        instance.visible = true;
-        instance.x = x;
-        instance.y = y;
-        instance.prevX = x;
-        instance.prevY = y;
-        instance.color = color;
-        instance.speedX = Math.sin(angle) * speed + (speedOffX || 0);
-        instance.speedY = Math.cos(angle) * speed + (speedOffY || 0);
-        instance.life = life;
-        instance.fullLife = life;
-        instance.spinAngle = Math.random() * PI_2;
-        instance.spinSpeed = 0.8;
-        instance.spinRadius = 0;
-        instance.sparkFreq = 0;
-        instance.sparkTimer = 0;
+    // Xử lý nút bấm để phát nhạc và chạy code
+    document.getElementById('btn-start').addEventListener('click', function() {
+        document.getElementById('start-overlay').style.display = 'none';
+        const audio = document.getElementById('audio');
+        if(audio) audio.play().catch(e => console.log("Lỗi nhạc:", e));
         
-        if(!this.active[color]) this.active[color] = [];
-        this.active[color].push(instance);
-        return instance;
-    },
-    returnInstance(instance) {
-        instance.onDeath = null;
-        this._pool.push(instance);
-    }
-};
-
-// --- LỚP SPARK (Tàn lửa rơi) ---
-const Spark = {
-    active: {},
-    _pool: [],
-    _new() { return {}; },
-    add(x, y, color, angle, speed, life) {
-        const instance = this._pool.pop() || this._new();
-        instance.x = x;
-        instance.y = y;
-        instance.prevX = x;
-        instance.prevY = y;
-        instance.color = color;
-        instance.speedX = Math.sin(angle) * speed;
-        instance.speedY = Math.cos(angle) * speed;
-        instance.life = life;
-        if(!this.active[color]) this.active[color] = [];
-        this.active[color].push(instance);
-        return instance;
-    },
-    returnInstance(instance) { this._pool.push(instance); }
-};
-
-// --- LỚP SHELL (Quả pháo bay lên) ---
-class Shell {
-    constructor(options) {
-        Object.assign(this, options);
-        this.starLifeVariation = options.starLifeVariation || 0.125;
-        this.color = options.color || MyMath.randomChoice(Object.values(COLOR));
-        this.starCount = options.starCount || 100;
-    }
-    launch(x, launchHeight) {
-        const width = mainStage.width;
-        const height = mainStage.height;
-        const hpad = 60;
-        const vpad = 50;
-        const minHeight = height - height * 0.45;
-        
-        const launchX = x * (width - hpad * 2) + hpad;
-        const launchY = height;
-        const burstY = minHeight - launchHeight * (minHeight - vpad);
-        const launchDistance = launchY - burstY;
-        const launchVelocity = Math.pow(launchDistance * 0.04, 0.64);
-
-        this.comet = Star.add(
-            launchX, launchY,
-            typeof this.color === "string" ? this.color : COLOR.White,
-            Math.PI,
-            launchVelocity,
-            launchVelocity * 400 
-        );
-        
-        // Cấu hình đuôi pháo
-        this.comet.heavy = true;
-        this.comet.spinRadius = 0.5;
-        this.comet.sparkFreq = 8; 
-        this.comet.sparkLife = 320;
-        this.comet.sparkLifeVariation = 3;
-        this.comet.onDeath = (comet) => this.burst(comet.x, comet.y);
-    }
-    burst(x, y) {
-        const speed = this.spreadSize / 96;
-        let color = this.color;
-        
-        // Tạo nổ tròn
-        const count = this.starCount;
-        for(let i=0; i<count; i++) {
-            const angle = (i/count) * PI_2;
-            const star = Star.add(
-                x, y,
-                color,
-                angle,
-                speed,
-                this.starLife + Math.random() * this.starLife * this.starLifeVariation
-            );
-            
-            // Hiệu ứng lấp lánh
-            if(this.glitter) {
-                star.sparkFreq = 20; 
-                star.sparkSpeed = 0.3;
-                star.sparkLife = 300;
-                star.sparkColor = COLOR.Gold;
-            }
-        }
-    }
-}
-
-// --- VÒNG LẶP CHÍNH ---
-let lastTime = 0;
-let simSpeed = 1;
-
-function update(time) {
-    const dt = (time - lastTime) / 1000;
-    lastTime = time;
-    const speed = 1.2; // Tốc độ game
-
-    // Xóa màn hình mờ để tạo đuôi (Trail Effect)
-    mainStage.ctx.globalCompositeOperation = 'source-over';
-    mainStage.ctx.fillStyle = `rgba(0, 0, 0, 0.15)`; // Độ dài đuôi
-    mainStage.ctx.fillRect(0, 0, mainStage.width, mainStage.height);
-
-    // Chế độ hòa trộn ánh sáng (Light Blend)
-    mainStage.ctx.globalCompositeOperation = 'lighter';
-
-    // Cập nhật Star
-    Object.keys(Star.active).forEach(color => {
-        const stars = Star.active[color];
-        for (let i = stars.length - 1; i >= 0; i--) {
-            const star = stars[i];
-            star.life -= 17 * speed;
-            if (star.life <= 0) {
-                if(star.onDeath) star.onDeath(star);
-                Star.returnInstance(star);
-                stars.splice(i, 1);
-                continue;
-            }
-            star.prevX = star.x;
-            star.prevY = star.y;
-            star.x += star.speedX * speed;
-            star.y += star.speedY * speed;
-            
-            // Vật lý
-            star.speedX *= 0.98; // Cản gió
-            star.speedY *= 0.98;
-            star.speedY += 0.05 * speed; // Trọng lực
-            
-            // Tạo tia lửa đuôi (Spark)
-            if (star.sparkFreq && star.life > 0) {
-                star.sparkTimer -= 17;
-                if(star.sparkTimer < 0) {
-                    star.sparkTimer = star.sparkFreq;
-                    Spark.add(star.x, star.y, star.sparkColor, Math.random()*PI_2, Math.random(), star.sparkLife);
-                }
-            }
-            
-            // Vẽ Star
-            mainStage.ctx.lineWidth = 2;
-            mainStage.ctx.strokeStyle = star.color;
-            mainStage.ctx.beginPath();
-            mainStage.ctx.moveTo(star.prevX, star.prevY);
-            mainStage.ctx.lineTo(star.x, star.y);
-            mainStage.ctx.stroke();
-        }
+        // Gọi hàm bắt đầu trong script.js
+        if(window.startCountdown) window.startCountdown();
     });
-
-    // Cập nhật Spark
-    Object.keys(Spark.active).forEach(color => {
-        const sparks = Spark.active[color];
-        for (let i = sparks.length - 1; i >= 0; i--) {
-            const spark = sparks[i];
-            spark.life -= 17 * speed;
-            if (spark.life <= 0) {
-                Spark.returnInstance(spark);
-                sparks.splice(i, 1);
-                continue;
-            }
-            spark.prevX = spark.x;
-            spark.prevY = spark.y;
-            spark.x += spark.speedX * speed;
-            spark.y += spark.speedY * speed;
-            spark.speedX *= 0.9;
-            spark.speedY *= 0.9;
-            spark.speedY += 0.05 * speed;
-
-            // Vẽ Spark
-            mainStage.ctx.lineWidth = 1;
-            mainStage.ctx.strokeStyle = spark.color;
-            mainStage.ctx.beginPath();
-            mainStage.ctx.moveTo(spark.prevX, spark.prevY);
-            mainStage.ctx.lineTo(spark.x, spark.y);
-            mainStage.ctx.stroke();
-        }
-    });
-
-    requestAnimationFrame(update);
-}
-
-// --- HÀM BẮN PHÁO HOA ---
-function launchRandomShell(type = 'normal') {
-    const size = 100 + Math.random() * 50;
-    const shell = new Shell({
-        spreadSize: size,
-        starLife: 1000 + size * 5,
-        starCount: type === 'big' ? 300 : 100,
-        glitter: true,
-        color: type === 'gold' ? COLOR.Gold : MyMath.randomChoice(Object.values(COLOR))
-    });
-    shell.launch(Math.random(), 1 + Math.random() * 0.3);
-}
-
-// --- PHẦN 2: KỊCH BẢN CHỮ (TIMELINE) ---
-const countdownEl = document.getElementById('text-countdown');
-const happyEl = document.getElementById('text-happy');
-const yearEl = document.getElementById('text-2026');
-
-function runTimeline() {
-    let count = 5;
-    
-    // Giai đoạn 1: Đếm ngược
-    const countTimer = setInterval(() => {
-        countdownEl.innerText = count;
-        countdownEl.classList.add('visible');
-        
-        // Bắn 1 quả pháo nhỏ mỗi nhịp đếm
-        launchRandomShell();
-        
-        // Hiệu ứng thu phóng số
-        setTimeout(() => {
-            if(count > 0) countdownEl.classList.remove('visible');
-        }, 800);
-
-        count--;
-        
-        if (count < 0) {
-            clearInterval(countTimer);
-            showHappyNewYear();
-        }
-    }, 1000);
-}
-
-function showHappyNewYear() {
-    countdownEl.classList.add('hidden'); // Ẩn số 1 đi
-    
-    setTimeout(() => {
-        happyEl.classList.add('visible'); // Hiện Happy New Year
-        
-        // BẮN PHÁO HOA LIÊN TỤC (Finale Mode)
-        let burstCount = 0;
-        const burstTimer = setInterval(() => {
-            launchRandomShell('big'); // Bắn pháo to
-            burstCount++;
-            if(burstCount > 15) clearInterval(burstTimer);
-        }, 200);
-        
-    }, 500);
-
-    // Sau 3 giây thì chuyển sang 2026
-    setTimeout(() => {
-        happyEl.classList.remove('visible');
-        happyEl.classList.add('hidden');
-        
-        setTimeout(() => {
-            yearEl.classList.add('visible'); // HIỆN 2026 VÀNG
-            
-            // Bắn pháo hoa Vàng (Gold) làm nền cho chữ
-            setInterval(() => {
-                launchRandomShell('gold');
-            }, 800);
-            
-        }, 1000);
-    }, 4000);
-}
-
-// --- SỰ KIỆN ---
-window.addEventListener('resize', () => mainStage.resize());
-
-document.getElementById('btn-start').addEventListener('click', () => {
-    // Ẩn nút start
-    const overlay = document.getElementById('start-btn-container');
-    overlay.style.opacity = 0;
-    setTimeout(() => overlay.style.display = 'none', 500);
-    
-    // Phát nhạc
-    const audio = document.getElementById('bg-music');
-    audio.play().catch(e => console.log("Audio play failed", e));
-    
-    // Bắt đầu chạy
-    requestAnimationFrame(update);
-    runTimeline();
-});
-
 </script>
+
 </body>
 </html>
